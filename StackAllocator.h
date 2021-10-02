@@ -44,6 +44,7 @@ private:
     bool m_Enabled;
     //Singleton instance.
     static StackAllocator* pInstance;
+    static std::mutex m_Lock;
 
     //Our stack header.
     static Stack* m_pMemoryStack;
@@ -54,6 +55,7 @@ private:
 };
 
 StackAllocator* StackAllocator::pInstance{ nullptr };
+std::mutex StackAllocator::m_Lock;
 Stack* StackAllocator::m_pMemoryStack{ nullptr };
 std::byte* StackAllocator::m_pByteWalker{ nullptr };
 ObjectHeader* StackAllocator::m_pTop{ nullptr };
@@ -129,6 +131,7 @@ StackAllocator::~StackAllocator()
 template<typename T, typename... Arguments>
 T* StackAllocator::New(Arguments&&... args)
 {
+    std::lock_guard<std::mutex> lock(m_Lock);
     //Check if we have enough space on the stack for the object.
     //If not, return nullptr and nothing happens.
     if (m_pMemoryStack->m_stackSize < m_pMemoryStack->m_currentSize + sizeof(T) + sizeof(ObjectHeader))
@@ -164,8 +167,8 @@ T* StackAllocator::New(Arguments&&... args)
 
 void StackAllocator::CleanUp()
 {
+    std::lock_guard<std::mutex> lock(m_Lock);
     //Reset pointer & currentsize & call destructor of all allocated objects.
-
     //Set the bytewalker to be the start of the allocated memory.
     m_pByteWalker = m_pMemoryStack->m_pData;
     //Set current stacksize to 0.

@@ -24,6 +24,8 @@
 #include <thread>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
+#include <mutex>
 
 #if defined(DEBUG) | defined (_DEBUG)
 #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
