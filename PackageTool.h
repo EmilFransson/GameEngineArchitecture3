@@ -57,6 +57,6 @@ public:
 
 	void Package(const std::string& dirPath);
 private:
-	float* ParseObj(const std::string& dirPath);
 	PackagedTexture PackageTexture(const std::string& texPath);
 };
+

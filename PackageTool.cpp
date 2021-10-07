@@ -10,6 +10,9 @@ void PackageTool::Package(const std::string& dirPath)
 		assert(false);
 	}
 
+	//Open a new file for writing the package to.
+	//Write a pacakge header to the file.
+
 	objl::Loader loader;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{dirPath})
 	{
@@ -26,43 +29,34 @@ void PackageTool::Package(const std::string& dirPath)
 		}
 		else if (filetype == ".png")
 		{
-
+			//Write the texture to the opened package file.
+			//Write a chunk header to the file
+			//Write a texture header to the file
+			//Write the data to the file
 		}
 
-		//Komprimera loader.LoadedMaterials och lägg till i package format.
 		for (objl::Material currentMat : loader.LoadedMaterials)
 		{
-
+			//Write the material to the opened package file
+			//Write a chunk header to the file
+			//Write a Material header to the file
+			//Write the data to the file
 		}
-		//Komprimera loader.LoadedMeshes och lägg till i package format.
-		//Först så gör vi vertices och indices till format som är redo för att bli konverterade till vertex och index buffer.
+		
 		for (objl::Mesh currentMesh : loader.LoadedMeshes)
 		{
-
+			//Först så gör vi vertices och indices till format som är redo för att bli konverterade till vertex och index buffer.
+			//Write the mesh data to the opened package file
+			//Write a chunk header to the file
+			//Write a Mesh header to the file
+			//Write the data to the file
 		}
 		
 	}
-}
 
-float* PackageTool::ParseObj(const std::string& filePath)
-{
-	std::ifstream objFile(filePath);
-	if (objFile.is_open())
-	{
-		std::string line;
-		while (getline(objFile, line))
-		{
+	//Zip the package file.
 
-			if (line[0] == 'v')
-			{
-
-			}
-		}
-	}
-	else
-	{
-		assert(false);
-	}
+	//Return the filepath to the zip.
 }
 
 PackageTool::PackagedTexture PackageTool::PackageTexture(const std::string& texPath)
