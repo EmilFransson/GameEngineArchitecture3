@@ -1,7 +1,16 @@
 #pragma once
+#define STB_IMAGE_IMPLEMENTATION
+
 class PackageTool
 {
 private:
+	struct PackagedTexture
+	{
+		int32_t width, height;
+		int32_t rowPitch;
+		BYTE* data;
+	};
+
 public:
 	struct PackageHeader
 	{
@@ -38,5 +47,5 @@ public:
 	void Package(const std::string& dirPath);
 private:
 	float* ParseObj(const std::string& dirPath);
+	PackagedTexture PackageTexture(const std::string& texPath);
 };
-

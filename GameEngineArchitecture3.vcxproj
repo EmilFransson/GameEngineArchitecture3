@@ -156,6 +156,7 @@
     <ClInclude Include="RenderCommand.h" />
     <ClInclude Include="Stack.h" />
     <ClInclude Include="StackAllocator.h" />
+    <ClInclude Include="stb_image.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="Utility.h" />
