@@ -32,10 +32,11 @@ public:
 	};
 private:
 public:
-	PackageTool();
-	~PackageTool();
+	PackageTool() = default;
+	~PackageTool() = default;
 
 	void Package(const std::string& dirPath);
 private:
+	float* ParseObj(const std::string& dirPath);
 };
 
