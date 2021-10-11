@@ -19,7 +19,7 @@ std::string PackageTool::Package(const std::string& dirPath)
 
 	//Write 0's to PackageHeader
 	packageFile.write(buffer, sizeof(PackageHeader));
-	size_t assetCount = 0;
+	uint8_t assetCount = 0;
 	uint32_t size = 0;
 	size += sizeof(PackageHeader);
 
