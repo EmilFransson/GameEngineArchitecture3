@@ -95,7 +95,7 @@ std::string PackageTool::Package(const std::string& dirPath)
 		packageFile.write((char*)(&ch), sizeof(ChunkHeader));
 		size += sizeof(ChunkHeader);
 		//Write the readable
-		packageFile.write((char*)(currentMat.name.data()), ch.readableSize);
+		packageFile.write((char*)(currentMat.name.data()), ch.readableSize); // Change to stream write operator <<
 		size += ch.readableSize;
 		//Write the materialheader
 		packageFile.write((char*)(&mh), sizeof(MaterialHeader));
@@ -149,10 +149,7 @@ std::string PackageTool::Package(const std::string& dirPath)
 	packageFile.write((char*)(&ph), sizeof(PackageHeader));
 
 	packageFile.close();
-	if (packageFile.fail())
-	{
-		assert(false); // TODO: Warn user instead
-	};
+	assert(!packageFile.fail());
 
 	//Zip the package file.
 
