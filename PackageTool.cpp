@@ -12,7 +12,9 @@ void PackageTool::Package(const std::string& dirPath)
 
 	//Open a new file for writing the package to.
 	//Write a pacakge header to the file.
-
+	std::ofstream packageFile("../Packages/" + Folder.path().filename().string());
+	assert(packageFile);
+	
 	objl::Loader loader;
 	for (auto const& dir_entry : std::filesystem::directory_iterator{dirPath})
 	{
@@ -29,10 +31,17 @@ void PackageTool::Package(const std::string& dirPath)
 		}
 		else if (filetype == ".png")
 		{
-			//Write the texture to the opened package file.
-			//Write a chunk header to the file
+			auto texData = PackageTexture(dir_entry.path().string());
+			ChunkHeader ch = {
+				.type = {'T', 'E', 'X', ' '},
+				.chunkSize = sizeof(TextureHeader) + texData.width * texData.height * 4, // 4 channels for DirectX RGBA Textures
+				.readableSize = dir_entry.path().string().length(),
+			};
+			CoCreateGuid(&ch.guid);
+				
 			//Write a texture header to the file
 			//Write the data to the file
+			//Clean up image
 		}
 
 		for (objl::Material currentMat : loader.LoadedMaterials)
@@ -45,7 +54,7 @@ void PackageTool::Package(const std::string& dirPath)
 		
 		for (objl::Mesh currentMesh : loader.LoadedMeshes)
 		{
-			//Först så gör vi vertices och indices till format som är redo för att bli konverterade till vertex och index buffer.
+			//Fï¿½rst sï¿½ gï¿½r vi vertices och indices till format som ï¿½r redo fï¿½r att bli konverterade till vertex och index buffer.
 			//Write the mesh data to the opened package file
 			//Write a chunk header to the file
 			//Write a Mesh header to the file
@@ -53,6 +62,12 @@ void PackageTool::Package(const std::string& dirPath)
 		}
 		
 	}
+
+	packageFile.close();
+	if (packageFile.fail())
+	{
+		assert(false); // TODO: Warn user instead
+	};
 
 	//Zip the package file.
 
