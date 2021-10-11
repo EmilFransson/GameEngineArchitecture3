@@ -2,7 +2,6 @@
 #include "Application.h"
 #include "System.h"
 #include "RenderCommand.h"
-#include "Texture.h"
 
 Application::Application() noexcept
 	: m_Running{true}
@@ -28,7 +27,7 @@ Application::Application() noexcept
 
 	m_pCamera = std::make_unique<PerspectiveCamera>();
 
-	DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 0.0f) * DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(0.0f)) * DirectX::XMMatrixTranslation(0.0f, 0.0f, -0.8f);
+	DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 0.0f);
 	DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
 	Transform transform;
 	transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
