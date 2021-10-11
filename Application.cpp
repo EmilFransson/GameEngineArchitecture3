@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "System.h"
 #include "RenderCommand.h"
+#include "Texture.h"
 
 Application::Application() noexcept
 	: m_Running{true}
@@ -10,6 +11,20 @@ Application::Application() noexcept
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
 	m_pImGui = std::make_unique<UI>();
+
+	m_pQuad = std::make_unique<Quad>();
+	m_pQuad->BindInternals();
+	m_pVertexShader = std::make_unique<VertexShader>("Shaders/VertexShader.hlsl");
+	m_pPixelShader = std::make_unique<PixelShader>("Shaders/PixelShader.hlsl");
+	m_pInputLayout = std::make_unique<InputLayout>(m_pVertexShader->GetVertexShaderBlob());
+	m_pVertexShader->Bind();
+	m_pPixelShader->Bind();
+	m_pInputLayout->Bind();
+	m_pBrickTexture = Texture2D::Create("brick.png");
+	m_pBrickTexture->BindAsShaderResource();
+	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pViewport = std::make_unique<Viewport>();
+	m_pViewport->Bind();
 }
 
 void Application::Run() noexcept
@@ -20,6 +35,8 @@ void Application::Run() noexcept
 		RenderCommand::ClearBackBuffer(color);
 		RenderCommand::ClearDepthBuffer();
 		RenderCommand::BindBackBuffer();
+
+		RenderCommand::DrawIndexed(m_pQuad->GetNrOfindices());
 
 		UI::Begin();
 		// Windows not part of the dock space goes here:

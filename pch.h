@@ -9,6 +9,7 @@
 #include <dxgi.h>
 #include <d3dcompiler.h>
 #include <dxgidebug.h>
+#include <DirectXMath.h>
 
 #include <string>
 #include <memory>
@@ -26,8 +27,10 @@
 #include <ctime>
 #include <thread>
 #include <mutex>
-#include <filesystem>
+#include <map>
+#include <Objbase.h>
 #include <fstream>
+#include <filesystem>
 #if defined(DEBUG) | defined (_DEBUG)
 #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
 #else 
