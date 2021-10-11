@@ -56,7 +56,7 @@ public:
 	PackageTool() = default;
 	~PackageTool() = default;
 
-	void Package(const std::string& dirPath);
+	std::string Package(const std::string& dirPath);
 private:
 	PackagedTexture PackageTexture(const std::string& texPath);
 };
