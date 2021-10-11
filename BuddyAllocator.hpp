@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <bitset>
+#include <mutex>
 
 constexpr static auto MAX = 30;
 constexpr static auto MIN = 9;
@@ -23,6 +24,8 @@ private:
 	Node* firstFree[LEVELS] = {nullptr};
 	std::bitset<(1 << LEVELS) - 1> freeBits = {true};
 	size_t unusedMemory = MAX_BLOCK;
+	std::mutex lock;
+
 public:
 	BuddyAllocator()
 	{
@@ -37,6 +40,8 @@ public:
 	[[nodiscard]]
 	void* alloc(size_t size)
 	{
+		std::scoped_lock<std::mutex> lock(this->lock);
+
 		if (size == 0 || size > MAX_BLOCK)
 			return nullptr;
 		auto lvl = levelFromSize(size);
@@ -51,6 +56,8 @@ public:
 
 	void free(void* ptr, size_t size)
 	{
+		std::scoped_lock<std::mutex> lock(this->lock);
+
 		if (!ptr) return; // freeing nullptr
 
 		int lvl = levelFromSize(size);

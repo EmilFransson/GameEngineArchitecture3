@@ -25,6 +25,8 @@
 #include <thread>
 #include <cstdlib>
 #include <ctime>
+#include <thread>
+#include <mutex>
 #include <map>
 #include <Objbase.h>
 #include <fstream>
