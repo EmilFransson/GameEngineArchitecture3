@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "PackageTool.h"
+
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 std::string PackageTool::Package(const std::string& dirPath)
