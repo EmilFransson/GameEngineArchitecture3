@@ -7,11 +7,18 @@
 #include "InputLayout.h"
 #include "Quad.h"
 #include "Viewport.h"
+#include "ConstantBuffer.h"
+#include "PerspectiveCamera.h"
 
 #define TOKENPASTE(x, y) x ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
 #define PROFILE_FUNC Profiler TOKENPASTE2(profiler, __LINE__) (__FUNCTION__, [&](ProfileMetrics profileMetrics) {m_ProfileMetrics.push_back(std::move(profileMetrics));})
 #define PROFILE_SCOPE(scopeName) Profiler TOKENPASTE2(profiler, __LINE__) (scopeName, [&](ProfileMetrics profileMetrics) {m_ProfileMetrics.push_back(std::move(profileMetrics));})
+
+struct Transform
+{
+	DirectX::XMMATRIX wvpMatrix;
+};
 
 class Application
 {
@@ -31,4 +38,6 @@ private:
 	std::shared_ptr<Texture2D> m_pBrickTexture;
 	std::unique_ptr<Quad> m_pQuad;
 	std::unique_ptr<Viewport> m_pViewport;
+	std::unique_ptr<PerspectiveCamera> m_pCamera;
+	std::unique_ptr<ConstantBuffer> m_pConstantBuffer;
 };

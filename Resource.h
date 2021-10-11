@@ -3,7 +3,7 @@
 class Resource
 {
 public:
-	Resource() noexcept = default;
+	Resource() noexcept;
 	virtual ~Resource() noexcept = default;
 protected:
 	GUID m_GUID;

@@ -69,6 +69,7 @@ public:
 				pkg.close();
 
 				std::shared_ptr<Texture2D> resourceType = std::make_shared<Texture2D>(texHdr.width, texHdr.height, texHdr.rowPitch, textureBuffer.get());
+				
 				std::shared_ptr<Resource> resource = dynamic_pointer_cast<Resource>(resourceType);
 				m_Map[filePath] = resource;
 

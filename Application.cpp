@@ -25,6 +25,15 @@ Application::Application() noexcept
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pViewport = std::make_unique<Viewport>();
 	m_pViewport->Bind();
+
+	m_pCamera = std::make_unique<PerspectiveCamera>();
+
+	DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 0.0f) * DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(0.0f)) * DirectX::XMMatrixTranslation(0.0f, 0.0f, -0.8f);
+	DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
+	Transform transform;
+	transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
+	m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
+	m_pConstantBuffer->BindToVertexShader();
 }
 
 void Application::Run() noexcept
