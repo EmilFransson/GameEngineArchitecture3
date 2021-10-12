@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "System.h"
 #include "RenderCommand.h"
+#include "ResourceManager.h"
 
 Application::Application() noexcept
 	: m_Running{true}
@@ -10,6 +11,8 @@ Application::Application() noexcept
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
 	m_pImGui = std::make_unique<UI>();
+	ResourceManager::Get().MapPackageContent();
+
 
 	m_pQuad = std::make_unique<Quad>();
 	m_pQuad->BindInternals();

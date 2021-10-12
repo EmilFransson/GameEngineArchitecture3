@@ -94,6 +94,7 @@ public:
 			return resourceType;
 		}
 	}
+	void MapPackageContent() noexcept;
 private:
 	ResourceManager() noexcept = default;
 	~ResourceManager() noexcept = default;
