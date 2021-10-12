@@ -46,7 +46,7 @@ std::string PackageTool::Package(const char* dirPath)
 			ChunkHeader ch = {
 				.type = {'T', 'E', 'X', ' '},
 				.chunkSize = sizeof(TextureHeader) + static_cast<uint32_t>(texData.dataVec.size()),
-				.readableSize = dir_entry.path().string().length()
+				.readableSize = dir_entry.path().filename().string().length()
 			};
 			CoCreateGuid(&ch.guid);
 				
@@ -62,7 +62,7 @@ std::string PackageTool::Package(const char* dirPath)
 			packageFile.write((char*)(&ch), sizeof(ChunkHeader));
 			size += sizeof(ChunkHeader);
 			//Write the readable
-			packageFile.write(dir_entry.path().string().data(), ch.readableSize);
+			packageFile.write(dir_entry.path().filename().string().data(), ch.readableSize);
 			size += ch.readableSize;
 			//Write the textureheader
 			packageFile.write((char*)(&th), sizeof(TextureHeader));

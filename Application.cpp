@@ -11,7 +11,7 @@ Application::Application() noexcept
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
 	m_pImGui = std::make_unique<UI>();
-	//ResourceManager::Get().MapPackageContent();
+	ResourceManager::Get().MapPackageContent();
 
 
 	m_pQuad = std::make_unique<Quad>();

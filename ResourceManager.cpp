@@ -29,7 +29,10 @@ void ResourceManager::MapPackageContent() noexcept
 				inFile.read((char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
 				std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1]);
 				inFile.read(fileName.get(), chkHdr.readableSize);
-				packageFileMap[fileName.get()] = path;
+				fileName.get()[chkHdr.readableSize] = '\0';
+				std::string fileNameAsStr = fileName.get();
+				fileNameAsStr = fileNameAsStr.substr(fileNameAsStr.find_last_of("'\'") + 1, fileNameAsStr.size() - 1);
+				packageFileMap[fileNameAsStr] = path;
 
 			}
 			inFile.close();
