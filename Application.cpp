@@ -2,6 +2,7 @@
 #include "Application.h"
 #include "System.h"
 #include "RenderCommand.h"
+#include "PackageTool.h"
 #include "ResourceManager.h"
 
 Application::Application() noexcept
@@ -55,7 +56,7 @@ void Application::Run() noexcept
 		//...And ends here.
 		UI::BeginDockSpace();
 		//Windows part of the dock space goes here:
-		
+		GetPackagePath();
 
 		//Can be reinstated if we'd need it for any assignment3-profiling.
 		//DisplayProfilingResults();
@@ -86,4 +87,43 @@ void Application::DisplayProfilingResults() noexcept
 	}
 	ImGui::End();
 	m_ProfileMetrics.clear();
+}
+
+//When a path is entered check if it is a pkg file.
+void Application::GetPackagePath() noexcept
+{
+	ImGui::Begin("Package Path");
+	//std::string path;
+	std::unique_ptr<char> path = std::unique_ptr<char>(new char[64](0));
+	if (ImGui::InputText("Path: ", path.get(), 64, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AllowTabInput))
+	{
+		std::string p = path.get();
+		std::ifstream pkg;
+		if (p.find_last_of(".") == std::string::npos)
+		{
+			pkg = std::ifstream(path.get(), std::ios::binary);
+			//The folder exists
+			if (pkg.is_open())
+			{
+				std::cout << "Created .pkg at filepath: " << PackageTool::Package(path.get()) << std::endl;
+				pkg.close();
+			}
+			else
+			{
+				assert(false);
+			}
+		}
+		else
+		{
+			std::string extension = p.substr(p.find_last_of("."), p.size() - 1);
+			if(extension != ".pkg") //change to .zip
+			{
+				assert(false);
+			}
+		}
+		
+		
+	}
+	ImGui::End();
+
 }

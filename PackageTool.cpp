@@ -14,7 +14,7 @@ std::string PackageTool::Package(const std::string& dirPath)
 
 	//Open a new file for writing the package to.
 	//Write a pacakge header to the file.
-	std::string newPath = "../Packages/" + Folder.path().filename().string() + ".pkg";
+	std::string newPath = "Packages/" + Folder.path().filename().string() + ".pkg";
 	std::ofstream packageFile(newPath);
 	assert(packageFile);
 	char buffer[sizeof(PackageHeader)] = { 0 };

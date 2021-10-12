@@ -28,6 +28,7 @@ public:
 	void Run() noexcept;
 private:
 	void DisplayProfilingResults() noexcept;
+	void GetPackagePath() noexcept;
 private:
 	bool m_Running;
 	std::unique_ptr<UI> m_pImGui;
