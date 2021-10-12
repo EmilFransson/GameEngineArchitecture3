@@ -22,7 +22,7 @@ std::string PackageTool::Package(const char* dirPath)
 	//Write 0's to PackageHeader
 	packageFile.write(buffer, sizeof(PackageHeader));
 	uint8_t assetCount = 0;
-	uint32_t size = 0;
+	uint64_t size = 0;
 	size += sizeof(PackageHeader);
 
 	objl::Loader loader;
@@ -141,7 +141,7 @@ std::string PackageTool::Package(const char* dirPath)
 	PackageHeader ph = {
 		.id = { 'P', 'K', 'G'},
 		.assetCount = assetCount,
-		.size = size
+		.size = static_cast<uint32_t>(size)
 	};
 	packageFile.write((char*)(&ph), sizeof(PackageHeader));
 
