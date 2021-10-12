@@ -5,8 +5,34 @@ ResourceManager ResourceManager::s_Instance;
 
 void ResourceManager::MapPackageContent() noexcept
 {
-	for (const auto& file : std::filesystem::directory_iterator("packages/"))
+	std::vector<std::filesystem::directory_entry> packages;
+	std::map<std::string_view, std::string_view> packageFileMap;
+	for (const auto& package : std::filesystem::directory_iterator("Packages/"))
 	{
-		std::cout << file.path() << "\n";
+		std::string path = package.path().string();
+		path = path.substr(path.find_last_of("/") + 1, path.size() - 1);
+		
+		if (packageFileMap.contains(path))
+		{
+			//Package already dealt with.
+			continue;
+		}
+
+		std::ifstream inFile("Packages/" + path, std::ios::binary);
+		if (inFile.is_open())
+		{
+			PackageTool::PackageHeader pkgHdr{};
+			inFile.read((char*)&pkgHdr, sizeof(PackageTool::PackageHeader));
+			for (uint32_t i{ 0u }; i < pkgHdr.assetCount; ++i)
+			{
+				PackageTool::ChunkHeader chkHdr{};
+				inFile.read((char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
+				std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1]);
+				inFile.read(fileName.get(), chkHdr.readableSize);
+				packageFileMap[fileName.get()] = path;
+
+			}
+			inFile.close();
+		}
 	}
 }

@@ -1,31 +1,32 @@
 #pragma once
 #include "Texture.h"
 #include "Mesh.h"
+#include "PackageTool.h"
 
-struct PackageHeader
-{
-	char id[3]; //PCK or PKG ow whatever, not strictly necessary but feels official.
-	uint8_t assetCount;
-	uint32_t size;
-};
-
-struct ChunkHeader
-{
-	char type[4];		//Ex: TEX, MESH, AUD...
-	uint32_t chunkSize;	//Chunk header not included.
-	GUID guid;
-	uint32_t lengthOfHumanReadableString;
-};
-
-struct TextureHeader
-{
-	char textureType[4]; //COL, NORM, SPEC ...
-	uint32_t dataSize;
-	uint16_t width, height;
-	uint16_t rowPitch;
-
-	uint16_t pad;
-};
+//struct PackageHeader
+//{
+//	char id[3]; //PCK or PKG ow whatever, not strictly necessary but feels official.
+//	uint8_t assetCount;
+//	uint32_t size;
+//};
+//
+//struct ChunkHeader
+//{
+//	char type[4];		//Ex: TEX, MESH, AUD...
+//	uint32_t chunkSize;	//Chunk header not included.
+//	GUID guid;
+//	uint32_t lengthOfHumanReadableString;
+//};
+//
+//struct TextureHeader
+//{
+//	char textureType[4]; //COL, NORM, SPEC ...
+//	uint32_t dataSize;
+//	uint16_t width, height;
+//	uint16_t rowPitch;
+//
+//	uint16_t pad;
+//};
 
 class ResourceManager
 {
@@ -51,19 +52,19 @@ public:
 			std::ifstream pkg("test.pkg", std::ios::binary);
 			if (pkg.is_open())
 			{
-				PackageHeader pkghdr{};
-				pkg.read((char*)&pkghdr, sizeof(PackageHeader));
-				ChunkHeader chHdr{};
-				pkg.read((char*)&chHdr, sizeof(ChunkHeader));
-				std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chHdr.lengthOfHumanReadableString + 1]);
-				pkg.read(fileName.get(), chHdr.lengthOfHumanReadableString);
-				fileName.get()[chHdr.lengthOfHumanReadableString] = '\0';
+				PackageTool::PackageHeader pkghdr{};
+				pkg.read((char*)&pkghdr, sizeof(PackageTool::PackageHeader));
+				PackageTool::ChunkHeader chHdr{};
+				pkg.read((char*)&chHdr, sizeof(PackageTool::ChunkHeader));
+				std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chHdr.readableSize + 1]);
+				pkg.read(fileName.get(), chHdr.readableSize);
+				fileName.get()[chHdr.readableSize] = '\0';
 				if (strcmp(fileName.get(), filePath.data()) != 0)
 				{
 					__debugbreak(); // temporary
 				}
-				TextureHeader texHdr{};
-				pkg.read((char*)&texHdr, sizeof(TextureHeader));
+				PackageTool::TextureHeader texHdr{};
+				pkg.read((char*)&texHdr, sizeof(PackageTool::TextureHeader));
 				std::unique_ptr<char> textureBuffer = std::unique_ptr<char>(DBG_NEW char[texHdr.dataSize]);
 				pkg.read(textureBuffer.get(), texHdr.dataSize);
 				pkg.close();

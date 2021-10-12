@@ -5,7 +5,7 @@
 #include "ResourceManager.h"
 #include "Utility.h"
 
-Texture::Texture(const uint16_t width, const uint16_t height) noexcept
+Texture::Texture(const uint32_t width, const uint32_t height) noexcept
 	: m_pRenderTargetView{nullptr}, 
 	  m_pShaderResourceView{nullptr},
 	  m_Width{width},
@@ -13,7 +13,7 @@ Texture::Texture(const uint16_t width, const uint16_t height) noexcept
 {
 }
 
-Texture2D::Texture2D(const uint16_t width, const uint16_t height, const uint16_t rowPitch, void* pData) noexcept
+Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t rowPitch, void* pData) noexcept
 	: Texture{width, height}, 
 	  m_pTexture2D {nullptr},
 	  m_pSamplerState{nullptr}

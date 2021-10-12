@@ -1,6 +1,4 @@
 #pragma once
-
-#include "OBJ_Loader.h"
 class PackageTool
 {
 private:
