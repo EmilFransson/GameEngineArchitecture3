@@ -3,8 +3,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-std::string PackageTool::Package(const std::string& dirPath)
+#include "OBJ_Loader.h"
+std::string PackageTool::Package(const char* dirPath)
 {
 	std::filesystem::directory_entry Folder = std::filesystem::directory_entry(dirPath);
 	if (!Folder.is_directory())

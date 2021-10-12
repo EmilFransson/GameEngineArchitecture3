@@ -1,6 +1,4 @@
 #pragma once
-
-#include "OBJ_Loader.h"
 class PackageTool
 {
 private:
@@ -52,7 +50,7 @@ public:
 	PackageTool() = default;
 	~PackageTool() = default;
 
-	static std::string Package(const std::string& dirPath);
+	static std::string Package(const char* dirPath);
 private:
 	static PackagedTexture PackageTexture(const std::string& texPath);
 };

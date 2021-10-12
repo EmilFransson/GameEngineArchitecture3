@@ -20,8 +20,8 @@ Application::Application() noexcept
 	m_pVertexShader->Bind();
 	m_pPixelShader->Bind();
 	m_pInputLayout->Bind();
-	m_pBrickTexture = Texture2D::Create("brick.png");
-	m_pBrickTexture->BindAsShaderResource();
+	//m_pBrickTexture = Texture2D::Create("brick.png");
+	//m_pBrickTexture->BindAsShaderResource();
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pViewport = std::make_unique<Viewport>();
 	m_pViewport->Bind();
@@ -45,7 +45,7 @@ void Application::Run() noexcept
 		RenderCommand::ClearDepthBuffer();
 		RenderCommand::BindBackBuffer();
 
-		RenderCommand::DrawIndexed(m_pQuad->GetNrOfindices());
+		//RenderCommand::DrawIndexed(m_pQuad->GetNrOfindices());
 
 		UI::Begin();
 		// Windows not part of the dock space goes here:
@@ -98,17 +98,17 @@ void Application::GetPackagePath() noexcept
 		std::ifstream pkg;
 		if (p.find_last_of(".") == std::string::npos)
 		{
-			pkg = std::ifstream(path.get(), std::ios::binary);
+			//pkg = std::ifstream(path.get(), std::ios::binary);
 			//The folder exists
-			if (pkg.is_open())
-			{
+			//if (pkg.is_open())
+			//{
 				std::cout << "Created .pkg at filepath: " << PackageTool::Package(path.get()) << std::endl;
-				pkg.close();
-			}
-			else
-			{
-				assert(false);
-			}
+				//pkg.close();
+			//}
+			//else
+			//{
+				//assert(false);
+			//}
 		}
 		else
 		{
