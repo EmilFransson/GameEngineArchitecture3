@@ -6,7 +6,7 @@ private:
 	{
 		uint32_t width, height;
 		uint32_t rowPitch;
-		BYTE* data;
+		std::vector<BYTE> dataVec;
 	};
 
 public:
@@ -53,5 +53,6 @@ public:
 	static std::string Package(const char* dirPath);
 private:
 	static PackagedTexture PackageTexture(const std::string& texPath);
+	static void PadTexture(PackagedTexture& tex, const BYTE* imgData, int channels);
 };
 
