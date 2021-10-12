@@ -4,8 +4,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "OBJ_Loader.h"
-
-std::string PackageTool::Package(const std::string& dirPath)
+std::string PackageTool::Package(const char* dirPath)
 {
 	std::filesystem::directory_entry Folder = std::filesystem::directory_entry(dirPath);
 	if (!Folder.is_directory())
@@ -46,14 +45,14 @@ std::string PackageTool::Package(const std::string& dirPath)
 			auto texData = PackageTexture(dir_entry.path().string());
 			ChunkHeader ch = {
 				.type = {'T', 'E', 'X', ' '},
-				.chunkSize = sizeof(TextureHeader) + texData.width * texData.height * 4, // 4 channels for DirectX RGBA Textures
+				.chunkSize = sizeof(TextureHeader) + static_cast<uint32_t>(texData.dataVec.size()),
 				.readableSize = dir_entry.path().string().length()
 			};
 			CoCreateGuid(&ch.guid);
 				
 			TextureHeader th = {
 				.textureType = {'C', 'O', 'L', ' '},
-				.dataSize = texData.width * texData.height * 4,
+				.dataSize = static_cast<uint32_t>(texData.dataVec.size()),
 				.width = texData.width,
 				.height = texData.height,
 				.rowPitch = texData.width * 4
@@ -69,11 +68,8 @@ std::string PackageTool::Package(const std::string& dirPath)
 			packageFile.write((char*)(&th), sizeof(TextureHeader));
 			size += sizeof(TextureHeader);
 			//Write the data to the file
-			packageFile.write((char*)(texData.data), th.dataSize);
+			packageFile.write((char*)(texData.dataVec.data()), th.dataSize);
 			size += th.dataSize;
-
-			//Clean up image
-			stbi_image_free(texData.data);
 		}
 	}
 
@@ -171,6 +167,33 @@ PackageTool::PackagedTexture PackageTool::PackageTexture(const std::string& texP
 	tex.width = width;
 	tex.height = height;
 	tex.rowPitch = width * channels;
-	tex.data = imageData;
+	PadTexture(tex, imageData, channels);
+	stbi_image_free(imageData);
 	return tex;
+}
+
+void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int channels)
+{
+	if (channels == 2)
+		assert(false);
+	if (channels == 4)
+	{
+		tex.dataVec.reserve(tex.width * tex.height * 4);
+		memcpy(tex.dataVec.data(), imgData, tex.width * tex.height * 4);
+	}
+	else if (channels == 3)
+	{
+		for (size_t i = 0; i < tex.width * tex.height * channels; i++)
+		{
+			tex.dataVec.emplace_back(imgData[i + 0]);
+			tex.dataVec.emplace_back(imgData[i + 1]);
+			tex.dataVec.emplace_back(imgData[i + 2]);
+			tex.dataVec.emplace_back(0xFF);
+		}
+	}
+	else if (channels == 1)
+	{
+		// Single channel images not supported
+		assert(false);
+	}
 }

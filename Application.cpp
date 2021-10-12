@@ -100,17 +100,17 @@ void Application::GetPackagePath() noexcept
 		std::ifstream pkg;
 		if (p.find_last_of(".") == std::string::npos)
 		{
-		//	pkg = std::ifstream(path.get(), std::ios::binary);
-		//	//The folder exists
+			//pkg = std::ifstream(path.get(), std::ios::binary);
+			//The folder exists
 			//if (pkg.is_open())
 			//{
-				std::cout << "Created .pkg at filepath: " << PackageTool::Package(p) << std::endl;
-				pkg.close();
-//			}
-//			else
-//			{
-//				assert(false);
-//			}
+				std::cout << "Created .pkg at filepath: " << PackageTool::Package(path.get()) << std::endl;
+				//pkg.close();
+			//}
+			//else
+			//{
+				//assert(false);
+			//}
 		}
 		else
 		{
