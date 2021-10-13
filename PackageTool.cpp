@@ -48,7 +48,8 @@ std::string PackageTool::Package(const char* dirPath)
 				.chunkSize = sizeof(TextureHeader) + static_cast<uint32_t>(texData.dataVec.size()),
 				.readableSize = dir_entry.path().filename().string().length()
 			};
-			CoCreateGuid(&ch.guid);
+			HRESULT hr = CoCreateGuid(&ch.guid);
+			if (FAILED(hr)) assert(false); //TODO: actually handle the error
 				
 			TextureHeader th = {
 				.textureType = {'C', 'O', 'L', ' '},
@@ -82,7 +83,8 @@ std::string PackageTool::Package(const char* dirPath)
 				.chunkSize = sizeof(MaterialHeader) + sizeof(objl::Material), // 4 channels for DirectX RGBA Textures
 				.readableSize = sizeof(currentMat.name)
 		};
-		CoCreateGuid(&ch.guid);
+		HRESULT hr = CoCreateGuid(&ch.guid);
+		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MaterialHeader mh = {
 			.dataSize = sizeof(objl::Material)
@@ -111,7 +113,8 @@ std::string PackageTool::Package(const char* dirPath)
 				.chunkSize = sizeof(MeshHeader) + sizeof(currentMesh.Vertices) + sizeof(currentMesh.Indices), // 4 channels for DirectX RGBA Textures
 				.readableSize = sizeof(currentMesh.MeshName)
 		};
-		CoCreateGuid(&ch.guid);
+		HRESULT hr = CoCreateGuid(&ch.guid);
+		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MeshHeader mh = {
 				.materialName = currentMesh.MeshMaterial.name,
