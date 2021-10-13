@@ -79,21 +79,19 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& filePath) noex
 			{
 				PackageTool::ChunkHeader chkHdr{};
 				pkg.read((char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
-				if (memcmp(chkHdr.type, "MESH", 4) == 0)
+				std::unique_ptr<char> pFileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1]);
+				pkg.read(pFileName.get(), chkHdr.readableSize);
+				pFileName.get()[chkHdr.readableSize] = '\0';
+				if (strcmp(pFileName.get(), filePath.c_str()) == 0)
 				{
-					std::unique_ptr<char> pFileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1]);
-					pkg.read(pFileName.get(), chkHdr.readableSize);
-					pFileName.get()[chkHdr.readableSize] = '\0';
-					if (strcmp(pFileName.get(), filePath.c_str()) == 0)
+					foundOBJ = true;
+				}
+				else
+				{
+					if (i != pkghdr.assetCount - 1u)
 					{
-						foundOBJ = true;
-					}
-					else
-					{
-						if (i != pkghdr.assetCount - 1u)
-						{
-							pkg.seekg(chkHdr.chunkSize, std::ios_base::cur);
-						}
+
+						pkg.seekg(chkHdr.chunkSize, std::ios_base::cur);
 					}
 				}
 			}
@@ -116,7 +114,6 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& filePath) noex
 			}
 			pkg.close();
 		}
-	
 	}
 	return nullptr;
 }
