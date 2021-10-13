@@ -135,11 +135,11 @@ std::string PackageTool::Package(const char* dirPath)
 		packageFile.write((char*)(&mh), sizeof(MeshHeader));
 		size += sizeof(MeshHeader);
 		//Write the vertices data to the file
-		packageFile.write((char*)(&currentMesh.Vertices), sizeof(currentMesh.Vertices));
-		size += sizeof(currentMesh.Vertices);
+		packageFile.write((char*)(currentMesh.Vertices.data()), sizeof(currentMesh.Vertices.data()));
+		size += sizeof(currentMesh.Vertices.data());
 		//Write the indices data to the file
-		packageFile.write((char*)(&currentMesh.Indices), sizeof(currentMesh.Indices));
-		size += sizeof(currentMesh.Indices);
+		packageFile.write((char*)(currentMesh.Indices.data()), sizeof(currentMesh.Indices.data()));
+		size += sizeof(currentMesh.Indices.data());
 	}
 
 	//Update Package Header
