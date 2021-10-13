@@ -39,7 +39,7 @@ std::string PackageTool::Package(const char* dirPath)
 		{
 			loader.LoadFile(dir_entry.path().string());
 		}
-		else if (filetype == ".png")
+		else if (filetype == ".png" || filetype == ".jpg")
 		{
 			assetCount += 1;
 			auto texData = PackageTexture(dir_entry.path().string());
