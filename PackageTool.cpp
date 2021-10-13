@@ -81,7 +81,7 @@ std::string PackageTool::Package(const char* dirPath)
 		ChunkHeader ch = {
 				.type = {'M', 'A', 'T', ' '},
 				.chunkSize = sizeof(MaterialHeader) + sizeof(objl::Material), // 4 channels for DirectX RGBA Textures
-				.readableSize = sizeof(currentMat.fileName.data())
+				.readableSize = currentMat.fileName.length()
 		};
 		HRESULT hr = CoCreateGuid(&ch.guid);
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
@@ -112,7 +112,7 @@ std::string PackageTool::Package(const char* dirPath)
 		ChunkHeader ch = {
 				.type = {'M', 'E', 'S', 'H'},
 				.chunkSize = sizeof(MeshHeader) + sizeof(currentMesh.Vertices) + sizeof(currentMesh.Indices), // 4 channels for DirectX RGBA Textures
-				.readableSize = sizeof(currentMesh.FileName.data())
+				.readableSize = currentMesh.FileName.length()
 		};
 		HRESULT hr = CoCreateGuid(&ch.guid);
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
