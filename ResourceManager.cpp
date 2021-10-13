@@ -79,7 +79,7 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& filePath) noex
 			{
 				PackageTool::ChunkHeader chkHdr{};
 				pkg.read((char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
-				if (strcmp(chkHdr.type, "MESH") == 0)
+				if (memcmp(chkHdr.type, "MESH", 4) == 0)
 				{
 					std::unique_ptr<char> pFileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1]);
 					pkg.read(pFileName.get(), chkHdr.readableSize);
@@ -102,20 +102,21 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& filePath) noex
 				PackageTool::MeshHeader meshHdr{};
 				pkg.read((char*)&meshHdr, sizeof(PackageTool::MeshHeader));
 				std::vector<objl::Vertex> vertices;
-				pkg.read((char*)&vertices, meshHdr.verticesDataSize);
+				vertices.resize(meshHdr.verticesDataSize / sizeof(objl::Vertex));
+				pkg.read((char*)vertices.data(), meshHdr.verticesDataSize);
 				std::vector<unsigned int> indices;
-				pkg.read((char*)&indices, meshHdr.indicesDataSize);
+				indices.resize(meshHdr.indicesDataSize / sizeof(unsigned int));
+				pkg.read((char*)indices.data(), meshHdr.indicesDataSize);
+				pkg.close();
+
+				std::shared_ptr<MeshOBJ> resourceType = std::make_shared<MeshOBJ>(vertices, indices);
+
+				m_Map[filePath] = dynamic_pointer_cast<Resource>(resourceType);
+				return resourceType;
 			}
-	
 			pkg.close();
-	
-	
 		}
-		std::shared_ptr<MeshOBJ> resourceType = std::make_shared<MeshOBJ>();
-		std::shared_ptr<Resource> resource = dynamic_pointer_cast<Resource>(resourceType);
 	
-		m_Map[filePath] = resource;
-		return resourceType;
 	}
 	return nullptr;
 }

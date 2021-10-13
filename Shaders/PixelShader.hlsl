@@ -4,6 +4,7 @@ SamplerState smplr : register(s0);
 struct PS_IN
 {
     float4 inPositionSS : SV_Position;
+    float3 inNormalLS   : NORMAL;
     float2 inTexCoords  : TEXCOORD;
 };
 

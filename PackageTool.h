@@ -38,8 +38,8 @@ public:
 	{
 		std::string meshName;
 		std::string materialName;	//The material the mesh uses.
-		uint32_t verticesDataSize;	//The size of the vertexdata part of the data.
-		uint32_t indicesDataSize;	//The size of the indexdata part of the data.
+		uint64_t verticesDataSize;	//The size of the vertexdata part of the data.
+		uint64_t indicesDataSize;	//The size of the indexdata part of the data.
 	};
 	
 	struct MaterialHeader

@@ -21,7 +21,8 @@ Application::Application() noexcept
 	m_pVertexShader->Bind();
 	m_pPixelShader->Bind();
 	m_pInputLayout->Bind();
-	//m_pMesh = MeshOBJ::Create("cube.obj");
+	m_pMesh = MeshOBJ::Create("Cube.obj");
+	//m_pMesh->BindInternals();
 	//m_pBrickTexture = Texture2D::Create("bricks.png");
 	//m_pThanosTexture = Texture2D::Create("thanos.png");
 	
