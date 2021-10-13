@@ -88,9 +88,11 @@ std::string PackageTool::Package(const char* dirPath)
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MaterialHeader mh = {
-			.materialName = currentMat.name.c_str(),
+			.materialName = { 0 },
 			.dataSize = sizeof(objl::Material)
 		};
+		//Copy in the name.
+		currentMat.name.copy(mh.materialName, currentMat.name.size());
 
 		//Write the chunkheader
 		packageFile.write((char*)(&ch), sizeof(ChunkHeader));
@@ -119,11 +121,14 @@ std::string PackageTool::Package(const char* dirPath)
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MeshHeader mh = {
-				.meshName = currentMesh.MeshName.c_str(),
-				.materialName = currentMesh.MeshMaterial.name.c_str(),
+				.meshName = { 0 },
+				.materialName = { 0 },
 				.verticesDataSize = currentMesh.Vertices.size() * sizeof(objl::Vertex),
 				.indicesDataSize = currentMesh.Indices.size() * sizeof(unsigned)
 		};
+		//Copy in the names.
+		currentMesh.MeshName.copy(mh.meshName, currentMesh.MeshName.size());
+		currentMesh.MeshMaterial.name.copy(mh.materialName, currentMesh.MeshMaterial.name.size());
 
 		//Write the chunkheader
 		packageFile.write((char*)(&ch), sizeof(ChunkHeader));
