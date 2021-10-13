@@ -37,7 +37,7 @@ std::string PackageTool::Package(const char* dirPath)
 		
 		if (filetype == ".obj")
 		{
-			loader.LoadFile(dir_entry.path().string());
+			loader.LoadFile(dir_entry.path().string(), dir_entry.path().filename().string());
 		}
 		else if (filetype == ".png" || filetype == ".jpg")
 		{
@@ -81,12 +81,13 @@ std::string PackageTool::Package(const char* dirPath)
 		ChunkHeader ch = {
 				.type = {'M', 'A', 'T', ' '},
 				.chunkSize = sizeof(MaterialHeader) + sizeof(objl::Material), // 4 channels for DirectX RGBA Textures
-				.readableSize = sizeof(currentMat.name)
+				.readableSize = sizeof(currentMat.fileName.data())
 		};
 		HRESULT hr = CoCreateGuid(&ch.guid);
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MaterialHeader mh = {
+			.materialName = currentMat.name,
 			.dataSize = sizeof(objl::Material)
 		};
 
@@ -94,7 +95,7 @@ std::string PackageTool::Package(const char* dirPath)
 		packageFile.write((char*)(&ch), sizeof(ChunkHeader));
 		size += sizeof(ChunkHeader);
 		//Write the readable
-		packageFile.write((char*)(currentMat.name.data()), ch.readableSize); // Change to stream write operator <<
+		packageFile.write((char*)(currentMat.fileName.data()), ch.readableSize); // Change to stream write operator <<
 		size += ch.readableSize;
 		//Write the materialheader
 		packageFile.write((char*)(&mh), sizeof(MaterialHeader));
@@ -111,12 +112,13 @@ std::string PackageTool::Package(const char* dirPath)
 		ChunkHeader ch = {
 				.type = {'M', 'E', 'S', 'H'},
 				.chunkSize = sizeof(MeshHeader) + sizeof(currentMesh.Vertices) + sizeof(currentMesh.Indices), // 4 channels for DirectX RGBA Textures
-				.readableSize = sizeof(currentMesh.MeshName)
+				.readableSize = sizeof(currentMesh.FileName.data())
 		};
 		HRESULT hr = CoCreateGuid(&ch.guid);
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MeshHeader mh = {
+				.meshName = currentMesh.MeshName,
 				.materialName = currentMesh.MeshMaterial.name,
 				.verticesDataSize = sizeof(currentMesh.Vertices),
 				.indicesDataSize = sizeof(currentMesh.Indices)
@@ -126,7 +128,7 @@ std::string PackageTool::Package(const char* dirPath)
 		packageFile.write((char*)(&ch), sizeof(ChunkHeader));
 		size += sizeof(ChunkHeader);
 		//Write the readable
-		packageFile.write((char*)(currentMesh.MeshName.data()), ch.readableSize);
+		packageFile.write((char*)(currentMesh.FileName.data()), ch.readableSize);
 		size += ch.readableSize;
 		//Write the textureheader
 		packageFile.write((char*)(&mh), sizeof(MeshHeader));
