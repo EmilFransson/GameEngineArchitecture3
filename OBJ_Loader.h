@@ -142,6 +142,7 @@ namespace objl
 			illum = 0;
 		}
 
+		std::string fileName;
 		// Material Name
 		std::string name;
 		// Ambient Color
@@ -189,6 +190,7 @@ namespace objl
 			Vertices = _Vertices;
 			Indices = _Indices;
 		}
+		std::string FileName;
 		// Mesh Name
 		std::string MeshName;
 		// Vertex List
@@ -413,7 +415,7 @@ namespace objl
 		//
 		// If the file is unable to be found
 		// or unable to be loaded return false
-		bool LoadFile(std::string Path)
+		bool LoadFile(std::string Path, std::string fileName)
 		{
 			// If the file is not an .obj file return false
 			if (Path.substr(Path.size() - 4, 4) != ".obj")
@@ -492,7 +494,7 @@ namespace objl
 							// Create Mesh
 							tempMesh = Mesh(Vertices, Indices);
 							tempMesh.MeshName = meshname;
-
+							tempMesh.FileName = fileName;
 							// Insert Mesh
 							LoadedMeshes.push_back(tempMesh);
 
@@ -599,6 +601,7 @@ namespace objl
 						// Create Mesh
 						tempMesh = Mesh(Vertices, Indices);
 						tempMesh.MeshName = meshname;
+						tempMesh.FileName = fileName;
 						int i = 2;
 						while(1) {
 							tempMesh.MeshName = meshname + "_" + std::to_string(i);
@@ -648,7 +651,7 @@ namespace objl
 					#endif
 
 					// Load Materials
-					LoadMaterials(pathtomat);
+					LoadMaterials(pathtomat, fileName);
 				}
 			}
 
@@ -663,7 +666,7 @@ namespace objl
 				// Create Mesh
 				tempMesh = Mesh(Vertices, Indices);
 				tempMesh.MeshName = meshname;
-
+				tempMesh.FileName = fileName;
 				// Insert Mesh
 				LoadedMeshes.push_back(tempMesh);
 			}
@@ -988,7 +991,7 @@ namespace objl
 		}
 
 		// Load Materials from .mtl file
-		bool LoadMaterials(std::string path)
+		bool LoadMaterials(std::string path, std::string fileName)
 		{
 			// If the file is not a material file return false
 			if (path.substr(path.size() - 4, path.size()) != ".mtl")
@@ -1028,6 +1031,7 @@ namespace objl
 					{
 						// Generate the material
 
+						tempMaterial.fileName = fileName;
 						// Push Back loaded Material
 						LoadedMaterials.push_back(tempMaterial);
 
@@ -1136,7 +1140,7 @@ namespace objl
 			}
 
 			// Deal with last material
-
+			tempMaterial.fileName = fileName;
 			// Push Back loaded Material
 			LoadedMaterials.push_back(tempMaterial);
 
