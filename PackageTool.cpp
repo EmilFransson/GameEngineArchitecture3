@@ -114,7 +114,10 @@ std::string PackageTool::Package(const char* dirPath)
 		
 		ChunkHeader ch = {
 				.type = {'M', 'E', 'S', 'H'},
-				.chunkSize = sizeof(MeshHeader) + sizeof(currentMesh.Vertices) + sizeof(currentMesh.Indices), // 4 channels for DirectX RGBA Textures
+				.chunkSize = sizeof(MeshHeader) + 
+							 currentMesh.Vertices.size() * sizeof(objl::Vertex) + 
+							 currentMesh.Indices.size() * sizeof(unsigned),
+
 				.readableSize = currentMesh.FileName.length()
 		};
 		HRESULT hr = CoCreateGuid(&ch.guid);
