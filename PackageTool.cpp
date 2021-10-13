@@ -88,7 +88,7 @@ std::string PackageTool::Package(const char* dirPath)
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MaterialHeader mh = {
-			.materialName = currentMat.name,
+			.materialName = currentMat.name.c_str(),
 			.dataSize = sizeof(objl::Material)
 		};
 
@@ -119,8 +119,8 @@ std::string PackageTool::Package(const char* dirPath)
 		if (FAILED(hr)) assert(false); //TODO: actually handle the error
 
 		MeshHeader mh = {
-				.meshName = currentMesh.MeshName,
-				.materialName = currentMesh.MeshMaterial.name,
+				.meshName = currentMesh.MeshName.c_str(),
+				.materialName = currentMesh.MeshMaterial.name.c_str(),
 				.verticesDataSize = currentMesh.Vertices.size() * sizeof(objl::Vertex),
 				.indicesDataSize = currentMesh.Indices.size() * sizeof(unsigned)
 		};

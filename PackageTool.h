@@ -36,15 +36,15 @@ public:
 
 	struct MeshHeader
 	{
-		std::string meshName;
-		std::string materialName;	//The material the mesh uses.
+		const char* meshName;
+		const char* materialName;	//The material the mesh uses.
 		uint64_t verticesDataSize;	//The size of the vertexdata part of the data.
 		uint64_t indicesDataSize;	//The size of the indexdata part of the data.
 	};
 	
 	struct MaterialHeader
 	{
-		std::string materialName;
+		const char* materialName;
 		uint32_t dataSize;
 	};
 private:
