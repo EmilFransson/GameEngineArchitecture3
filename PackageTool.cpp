@@ -121,8 +121,8 @@ std::string PackageTool::Package(const char* dirPath)
 		MeshHeader mh = {
 				.meshName = currentMesh.MeshName,
 				.materialName = currentMesh.MeshMaterial.name,
-				.verticesDataSize = sizeof(currentMesh.Vertices),
-				.indicesDataSize = sizeof(currentMesh.Indices)
+				.verticesDataSize = currentMesh.Vertices.size() * sizeof(objl::Vertex),
+				.indicesDataSize = currentMesh.Indices.size() * sizeof(unsigned)
 		};
 
 		//Write the chunkheader
@@ -135,10 +135,10 @@ std::string PackageTool::Package(const char* dirPath)
 		packageFile.write((char*)(&mh), sizeof(MeshHeader));
 		size += sizeof(MeshHeader);
 		//Write the vertices data to the file
-		packageFile.write((char*)(currentMesh.Vertices.data()), sizeof(currentMesh.Vertices.data()));
+		packageFile.write((char*)(currentMesh.Vertices.data()), mh.verticesDataSize);
 		size += sizeof(currentMesh.Vertices.data());
 		//Write the indices data to the file
-		packageFile.write((char*)(currentMesh.Indices.data()), sizeof(currentMesh.Indices.data()));
+		packageFile.write((char*)(currentMesh.Indices.data()), mh.indicesDataSize);
 		size += sizeof(currentMesh.Indices.data());
 	}
 
