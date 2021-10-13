@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "PackageTool.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
 #include "OBJ_Loader.h"
 std::string PackageTool::Package(const char* dirPath)
 {
@@ -15,7 +15,7 @@ std::string PackageTool::Package(const char* dirPath)
 	//Open a new file for writing the package to.
 	//Write a pacakge header to the file.
 	std::string newPath = "Packages/" + Folder.path().filename().string() + ".pkg";
-	std::ofstream packageFile(newPath);
+	std::ofstream packageFile(newPath, std::ios::binary);
 	assert(packageFile);
 	char buffer[sizeof(PackageHeader)] = { 0 };
 
@@ -43,6 +43,7 @@ std::string PackageTool::Package(const char* dirPath)
 		{
 			assetCount += 1;
 			auto texData = PackageTexture(dir_entry.path().string());
+
 			ChunkHeader ch = {
 				.type = {'T', 'E', 'X', ' '},
 				.chunkSize = sizeof(TextureHeader) + static_cast<uint32_t>(texData.dataVec.size()),
@@ -109,7 +110,7 @@ std::string PackageTool::Package(const char* dirPath)
 		ChunkHeader ch = {
 				.type = {'M', 'E', 'S', 'H'},
 				.chunkSize = sizeof(MeshHeader) + sizeof(currentMesh.Vertices) + sizeof(currentMesh.Indices), // 4 channels for DirectX RGBA Textures
-				.readableSize = sizeof(currentMesh.MeshName)
+				.readableSize = currentMesh.MeshName.size()
 		};
 		CoCreateGuid(&ch.guid);
 
@@ -123,7 +124,7 @@ std::string PackageTool::Package(const char* dirPath)
 		packageFile.write((char*)(&ch), sizeof(ChunkHeader));
 		size += sizeof(ChunkHeader);
 		//Write the readable
-		packageFile.write((char*)(currentMesh.MeshName.data()), ch.readableSize);
+		packageFile.write((char*)(currentMesh.MeshName.data()), dir_entry.path().filename().string().data());
 		size += ch.readableSize;
 		//Write the textureheader
 		packageFile.write((char*)(&mh), sizeof(MeshHeader));
@@ -178,12 +179,12 @@ void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int chan
 		assert(false);
 	if (channels == 4)
 	{
-		tex.dataVec.reserve(tex.width * tex.height * 4);
+		tex.dataVec.resize(tex.width * tex.height * 4);
 		memcpy(tex.dataVec.data(), imgData, tex.width * tex.height * 4);
 	}
 	else if (channels == 3)
 	{
-		for (size_t i = 0; i < tex.width * tex.height * channels; i++)
+		for (size_t i = 0; i < tex.width * tex.height * channels; i+=3)
 		{
 			tex.dataVec.emplace_back(imgData[i + 0]);
 			tex.dataVec.emplace_back(imgData[i + 1]);

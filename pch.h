@@ -31,6 +31,22 @@
 #include <Objbase.h>
 #include <fstream>
 #include <filesystem>
+
+// Iostream - STD I/O Library
+//#include <iostream>
+
+// Vector - STD Vector/Array Library
+//#include <vector>
+
+// String - STD String Library
+//#include <string>
+
+// fStream - STD File I/O Library
+//#include <fstream>
+
+// Math.h - STD math Library
+#include <math.h>
+
 #if defined(DEBUG) | defined (_DEBUG)
 #define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
 #else 

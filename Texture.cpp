@@ -51,8 +51,8 @@ Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t
 
 	D3D11_SAMPLER_DESC samplerDescriptor{};
 	samplerDescriptor.Filter = D3D11_FILTER::D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDescriptor.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDescriptor.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDescriptor.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerDescriptor.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	samplerDescriptor.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDescriptor.ComparisonFunc = D3D11_COMPARISON_NEVER;
 	samplerDescriptor.MinLOD = 0.0f;
@@ -60,7 +60,7 @@ Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t
 	HR_I(Graphics::GetDevice()->CreateSamplerState(&samplerDescriptor, &m_pSamplerState));
 }
 
-std::shared_ptr<Texture2D> Texture2D::Create(const std::string_view filePath) noexcept
+std::shared_ptr<Texture2D> Texture2D::Create(const std::string& filePath) noexcept
 {
 	return ResourceManager::Get().Load<Texture2D>(filePath);
 }
