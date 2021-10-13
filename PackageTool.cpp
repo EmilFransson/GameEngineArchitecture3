@@ -115,8 +115,8 @@ std::string PackageTool::Package(const char* dirPath)
 		ChunkHeader ch = {
 				.type = {'M', 'E', 'S', 'H'},
 				.chunkSize = sizeof(MeshHeader) + 
-							 currentMesh.Vertices.size() * sizeof(objl::Vertex) + 
-							 currentMesh.Indices.size() * sizeof(unsigned),
+							 static_cast<uint32_t>(currentMesh.Vertices.size() * sizeof(objl::Vertex)) + 
+							 static_cast<uint32_t>(currentMesh.Indices.size() * sizeof(unsigned)),
 
 				.readableSize = currentMesh.FileName.length()
 		};
