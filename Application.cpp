@@ -12,7 +12,6 @@ Application::Application() noexcept
 	m_pImGui = std::make_unique<UI>();
 	ResourceManager::Get().MapPackageContent();
 
-
 	m_pVertexShader = std::make_unique<VertexShader>("Shaders/VertexShader.hlsl");
 	m_pPixelShader = std::make_unique<PixelShader>("Shaders/PixelShader.hlsl");
 	m_pInputLayout = std::make_unique<InputLayout>(m_pVertexShader->GetVertexShaderBlob());
@@ -21,8 +20,8 @@ Application::Application() noexcept
 	m_pInputLayout->Bind();
 	m_pMesh = MeshOBJ::Create("Cube.obj");
 	m_pMesh->BindInternals();
-	m_pBrickTexture = Texture2D::Create("bricks.png");
-	//m_pThanosTexture = Texture2D::Create("thanos.png");
+	//m_pBrickTexture = Texture2D::Create("bricks.png");
+	m_pThanosTexture = Texture2D::Create("thanos.png");
 	
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pViewport = std::make_unique<Viewport>();
@@ -49,10 +48,9 @@ void Application::Run() noexcept
 		transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
 		m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
 		m_pConstantBuffer->BindToVertexShader();
-		m_pBrickTexture->BindAsShaderResource();
+		m_pThanosTexture->BindAsShaderResource();
 		
 		RenderCommand::DrawIndexed(m_pMesh->GetNrOfIndices());
-		
 
 		UI::Begin();
 		// Windows not part of the dock space goes here:
@@ -98,7 +96,7 @@ void Application::GetPackagePath() noexcept
 {
 	ImGui::Begin("Package Path");
 	//std::string path;
-	std::unique_ptr<char> path = std::unique_ptr<char>(new char[64](0));
+	std::unique_ptr<char> path = std::unique_ptr<char>(DBG_NEW char[64](0));
 	if (ImGui::InputText("Path: ", path.get(), 64, ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AllowTabInput))
 	{
 		std::string p = path.get();
@@ -125,9 +123,6 @@ void Application::GetPackagePath() noexcept
 				assert(false);
 			}
 		}
-		
-		
 	}
 	ImGui::End();
-
 }

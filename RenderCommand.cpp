@@ -23,9 +23,9 @@ void RenderCommand::UnbindRenderTargets(const unsigned int nrOfTargets) noexcept
 	CHECK_STD(Graphics::GetContext()->OMSetRenderTargets(nrOfTargets, nullRTV->GetAddressOf(), nullptr));
 }
 
-void RenderCommand::DrawIndexed(const unsigned int indexCount) noexcept
+void RenderCommand::DrawIndexed(const uint64_t indexCount) noexcept
 {
-	CHECK_STD(Graphics::GetContext()->DrawIndexed(indexCount, 0u, 0u));
+	CHECK_STD(Graphics::GetContext()->DrawIndexed(static_cast<UINT>(indexCount), 0u, 0u));
 }
 
 void RenderCommand::Drawinstanced(const uint32_t vertexCount, const uint32_t instanceCount) noexcept
