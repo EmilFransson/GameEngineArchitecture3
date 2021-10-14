@@ -3,7 +3,38 @@
 #include "PackageTool.h"
 #include "OBJ_Loader.h"
 
-ResourceManager ResourceManager::s_Instance;
+
+ResourceManager* ResourceManager::s_Instance;
+std::vector<std::thread> ResourceManager::m_tWorkers;
+size_t ResourceManager::m_numThreads;
+std::mutex ResourceManager::m_tQueueMutex;
+std::condition_variable ResourceManager::m_tCondition;
+bool ResourceManager::m_tTerminate;
+std::deque<ResourceManager::JobHolder*> ResourceManager::m_tQueue;
+
+void ResourceManager::Init()
+{
+	if (!s_Instance)
+	{
+		s_Instance = DBG_NEW ResourceManager();
+	}
+	m_tTerminate = false;
+	m_numThreads = std::thread::hardware_concurrency();
+	m_tWorkers.reserve(m_numThreads);
+	for (size_t i = 0; i < m_numThreads; i++)
+	{
+		//Maybe rework?
+		m_tWorkers.push_back(std::thread(
+			tWaitForJob
+		));
+	}
+}
+
+void ResourceManager::CleanUp()
+{
+	tShutdown();
+	delete s_Instance;
+}
 
 template<>
 std::shared_ptr<Texture2D> ResourceManager::Load(const std::string& fileName) noexcept
@@ -123,4 +154,63 @@ void ResourceManager::MapPackageContent() noexcept
 			}
 		}
 	}
+}
+
+void ResourceManager::tFindResource(std::string filename, std::string extension, std::shared_ptr<Resource>* memory)
+{
+	if (extension == ".obj")
+	{
+		*memory = MeshOBJ::Create(filename);
+	}
+	else if (extension == ".png")
+	{
+		*memory = Texture2D::Create(filename);
+	}
+}
+
+void ResourceManager::tWaitForJob(
+	//Arguments that doesnt change go here. (Or pointers to shared memory)
+)
+{
+	ResourceManager* myself = ResourceManager::Get();
+	JobHolder* Job;
+	while (!m_tTerminate)
+	{
+		{
+			std::unique_lock<std::mutex> lock(m_tQueueMutex);
+
+			m_tCondition.wait(lock, [myself]()
+				{
+					return !m_tQueue.empty();
+				});
+			if (m_tTerminate)
+			{
+				break;
+			}
+
+			Job = m_tQueue.front();
+			m_tQueue.pop_front();
+		}
+		Job->m_job(Job->m_filename, Job->m_extension, Job->m_memory);
+		delete Job;
+	}
+}
+
+void ResourceManager::tShutdown()
+{
+	{
+		std::unique_lock<std::mutex> lock(m_tQueueMutex);
+		m_tTerminate = true;
+	}
+
+	m_tCondition.notify_all();
+
+	for (std::thread& th : m_tWorkers)
+	{
+		th.join();
+	}
+
+	m_tWorkers.clear();
+
+	//stopped = true;
 }

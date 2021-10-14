@@ -1,5 +1,6 @@
 #pragma once
 #include "Vertex.h"
+#include "OBJ_Loader.h"
 class Quad
 {
 public:
@@ -10,6 +11,6 @@ public:
 private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> m_pVertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> m_pIndexBuffer;
-	std::array<Vertex, 4> m_Vertices;
+	std::array<objl::Vertex, 4> m_Vertices;
 	std::array<unsigned short, 6> m_Indices;
 };

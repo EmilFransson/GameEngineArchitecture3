@@ -23,7 +23,7 @@ class Application
 {
 public:
 	Application() noexcept;
-	~Application() noexcept = default;
+	~Application() noexcept;
 	void Run() noexcept;
 private:
 	void DisplayProfilingResults() noexcept;

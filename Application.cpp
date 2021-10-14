@@ -7,11 +7,15 @@ Application::Application() noexcept
 	: m_Running{true}
 {
 	System::Initialize();
+	ResourceManager::Get()->Init();
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
 	m_pImGui = std::make_unique<UI>();
-	ResourceManager::Get().MapPackageContent();
+	ResourceManager::Get()->MapPackageContent();
+	
 
+	m_pQuad = std::make_unique<Quad>();
+	m_pQuad->BindInternals();
 	m_pVertexShader = std::make_unique<VertexShader>("Shaders/VertexShader.hlsl");
 	m_pPixelShader = std::make_unique<PixelShader>("Shaders/PixelShader.hlsl");
 	m_pInputLayout = std::make_unique<InputLayout>(m_pVertexShader->GetVertexShaderBlob());
@@ -20,6 +24,11 @@ Application::Application() noexcept
 	m_pInputLayout->Bind();
 	//m_pMesh = MeshOBJ::Create("backpack.obj");
 	//m_pMesh->BindInternals();
+	//
+	//ResourceManager::Get()->tAddJob("Cube.obj", m_pBrickTexture.get());
+	ResourceManager::Get()->tAddJob<Texture2D>("bricks.png", &m_pBrickTexture);
+	//m_pBrickTexture = Texture2D::Create("bricks.png");
+	// 
 	//m_pBrickTexture = Texture2D::Create("bricks.png");
 	//m_pThanosTexture = Texture2D::Create("thanos.png");
 	
@@ -28,6 +37,11 @@ Application::Application() noexcept
 	m_pViewport->Bind();
 
 	m_pCamera = std::make_unique<PerspectiveCamera>();
+}
+
+Application::~Application() noexcept
+{
+	ResourceManager::Get()->CleanUp();
 }
 
 void Application::Run() noexcept
@@ -42,15 +56,16 @@ void Application::Run() noexcept
 		static float delta = 0.0f;
 		delta += 0.15f;
 
-		//DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(delta)) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 6.0f);
-		//DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
-		//static Transform transform{};
-		//transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
-		//m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
-		//m_pConstantBuffer->BindToVertexShader();
+		DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
+		DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
+		static Transform transform{};
+		transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
+		m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
+		m_pConstantBuffer->BindToVertexShader();
 		//m_pThanosTexture->BindAsShaderResource();
-		//
-		//RenderCommand::DrawIndexed(m_pMesh->GetNrOfIndices());
+		m_pBrickTexture->BindAsShaderResource();
+		
+		RenderCommand::DrawIndexed(m_pQuad->GetNrOfindices());
 
 		UI::Begin();
 		// Windows not part of the dock space goes here:

@@ -44,6 +44,6 @@ void MeshOBJ::BindInternals(const uint8_t slot) noexcept
 
 std::shared_ptr<MeshOBJ> MeshOBJ::Create(const std::string& fileName) noexcept
 {
-	return ResourceManager::Get().Load<MeshOBJ>(fileName);
+	return ResourceManager::Get()->Load<MeshOBJ>(fileName);
 }
 
