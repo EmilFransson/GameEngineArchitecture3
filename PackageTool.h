@@ -37,7 +37,7 @@ public:
 	struct MeshHeader
 	{
 		char meshName[64];
-		char materialName[64];	//The material the mesh uses.
+		char materialName[64];		//The material the mesh uses.
 		uint64_t verticesDataSize;	//The size of the vertexdata part of the data.
 		uint64_t indicesDataSize;	//The size of the indexdata part of the data.
 	};
