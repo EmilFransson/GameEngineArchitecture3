@@ -417,6 +417,7 @@ namespace objl
 		// or unable to be loaded return false
 		bool LoadFile(std::string Path, std::string fileName)
 		{
+			std::string folderName = Path.substr(0, Path.find_first_of('\\') + 1);
 			// If the file is not an .obj file return false
 			if (Path.substr(Path.size() - 4, 4) != ".obj")
 				return false;
@@ -427,7 +428,6 @@ namespace objl
 			if (!file.is_open())
 				return false;
 
-			LoadedMeshes.clear();
 			LoadedVertices.clear();
 			LoadedIndices.clear();
 
@@ -651,7 +651,7 @@ namespace objl
 					#endif
 
 					// Load Materials
-					LoadMaterials(pathtomat, fileName);
+					LoadMaterials(pathtomat, folderName, fileName);
 				}
 			}
 
@@ -991,13 +991,13 @@ namespace objl
 		}
 
 		// Load Materials from .mtl file
-		bool LoadMaterials(std::string path, std::string fileName)
+		bool LoadMaterials(std::string path, std::string folderName, std::string fileName)
 		{
 			// If the file is not a material file return false
 			if (path.substr(path.size() - 4, path.size()) != ".mtl")
 				return false;
 
-			std::ifstream file(path);
+			std::ifstream file(folderName + path);
 
 			// If the file is not found return false
 			if (!file.is_open())
