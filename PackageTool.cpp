@@ -45,6 +45,7 @@ std::string PackageTool::Package(const char* dirPath)
 		{
 			assetCount += 1;
 			auto texData = PackageTexture(dir_entry.path().string());
+			CompressTexture(texData);
 
 			ChunkHeader ch = {
 				.type = {'T', 'E', 'X', ' '},
@@ -212,4 +213,25 @@ void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int chan
 		// Single channel images not supported
 		assert(false);
 	}
+}
+
+void PackageTool::CompressTexture(PackagedTexture& tex)
+{
+	DirectX::Image dxImage;
+	dxImage.pixels = tex.dataVec.data();
+	dxImage.width = tex.width;
+	dxImage.height = tex.height;
+	dxImage.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	dxImage.rowPitch = static_cast<size_t>(tex.width) * 4;
+	dxImage.slicePitch = tex.width * tex.height * 4;
+	
+	DirectX::ScratchImage scImage;
+	HRESULT hr = DirectX::Compress(dxImage, 
+		DXGI_FORMAT_BC7_UNORM_SRGB,
+		DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL, 
+		DirectX::TEX_THRESHOLD_DEFAULT,
+		scImage);
+	auto meta = scImage.GetMetadata();
+	auto pxSize = scImage.GetPixelsSize();
+	auto pixels = scImage.GetPixels();
 }
