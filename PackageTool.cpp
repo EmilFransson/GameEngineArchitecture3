@@ -4,6 +4,7 @@
 #include "stb_image.h"
 
 #include "DirectXTex/DirectXTex.h"
+#include "Graphics.h"
 
 #include "OBJ_Loader.h"
 
@@ -232,11 +233,13 @@ void PackageTool::CompressTexture(PackagedTexture& tex)
 	dxImage.slicePitch = tex.width * tex.height * 4;
 	
 	DirectX::ScratchImage scImage;
-	HRESULT hr = DirectX::Compress(dxImage, 
+	HRESULT hr = DirectX::Compress(Graphics::GetDevice().Get(),
+		dxImage,
 		DXGI_FORMAT_BC7_UNORM_SRGB,
-		DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL, 
-		DirectX::TEX_THRESHOLD_DEFAULT,
+		DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL,
+		1.0,
 		scImage);
+
 	auto meta = scImage.GetMetadata();
 	auto pxSize = scImage.GetPixelsSize();
 	auto pixels = scImage.GetPixels();
