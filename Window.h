@@ -28,4 +28,8 @@ private:
 	static HWND m_WindowHandle;
 	static MSG m_WindowMessage;
 	static bool m_Running;
+
+	static std::vector<int> m_keyMap;
+public:
+	static std::vector<int> GetKeyMap();
 };

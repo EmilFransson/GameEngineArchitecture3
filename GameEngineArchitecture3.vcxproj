@@ -138,6 +138,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="InputLayout.cpp" />
     <ClCompile Include="Quad.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="Stack.cpp" />
     <ClCompile Include="System.cpp" />
@@ -175,6 +176,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="Quad.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Stack.h" />
     <ClInclude Include="StackAllocator.h" />

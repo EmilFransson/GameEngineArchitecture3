@@ -16,6 +16,7 @@ uint32_t Window::m_Height = 0u;
 HWND Window::m_WindowHandle;
 MSG Window::m_WindowMessage = { 0 };
 bool Window::m_Running = true;
+std::vector<int> Window::m_keyMap = { 0 };
 
 const Window& Window::Get() noexcept
 {
@@ -123,8 +124,50 @@ LRESULT Window::HandleMessages(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		m_Running = false;
 		break;
 	}
+	case WM_KEYDOWN:
+	{
+		bool keyFound = false;
+		for (size_t i = 0; i < m_keyMap.size(); i++)
+		{
+			if (wParam == m_keyMap[i])
+			{
+				keyFound = true;
+				break;
+			}
+		}
+
+		if (!keyFound)
+		{
+			m_keyMap.push_back(wParam);
+		}
+		break;
+	}
+	case WM_KEYUP:
+	{
+		size_t i = 0;
+		bool keyFound = false;
+		for (i; i < m_keyMap.size(); i++)
+		{
+			if (wParam == m_keyMap[i])
+			{
+				keyFound = true;
+				break;
+			}
+		}
+		if (keyFound)
+		{
+			m_keyMap.erase(m_keyMap.begin() + i);
+		}
+
+		break;
+	}
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+std::vector<int> Window::GetKeyMap()
+{
+	return m_keyMap;
 }
 
 void Window::ShutDown()

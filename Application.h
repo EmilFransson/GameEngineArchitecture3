@@ -9,6 +9,8 @@
 #include "ConstantBuffer.h"
 #include "PerspectiveCamera.h"
 #include "ResourceManager.h"
+#include "Timer.h"
+
 #define TOKENPASTE(x, y) x ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
 #define PROFILE_FUNC Profiler TOKENPASTE2(profiler, __LINE__) (__FUNCTION__, [&](ProfileMetrics profileMetrics) {m_ProfileMetrics.push_back(std::move(profileMetrics));})
@@ -30,6 +32,8 @@ private:
 	void GetPackagePath() noexcept;
 private:
 	bool m_Running;
+	Time* m_timer;
+
 	std::unique_ptr<UI> m_pImGui;
 	std::vector<ProfileMetrics> m_ProfileMetrics;
 	std::unique_ptr<VertexShader> m_pVertexShader;
