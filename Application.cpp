@@ -12,14 +12,16 @@ Application::Application() noexcept
 	m_pImGui = std::make_unique<UI>();
 	ResourceManager::Get().MapPackageContent();
 
+	//m_pQuad = std::make_unique<Quad>();
+	//m_pQuad->BindInternals();
+
 	m_pVertexShader = std::make_unique<VertexShader>("Shaders/VertexShader.hlsl");
 	m_pPixelShader = std::make_unique<PixelShader>("Shaders/PixelShader.hlsl");
 	m_pInputLayout = std::make_unique<InputLayout>(m_pVertexShader->GetVertexShaderBlob());
 	m_pVertexShader->Bind();
 	m_pPixelShader->Bind();
 	m_pInputLayout->Bind();
-	//m_pMesh = MeshOBJ::Create("backpack.obj");
-	//m_pMesh->BindInternals();
+	m_pBackPackMeshes = MeshOBJ::Create("backpack.obj");
 	//m_pBrickTexture = Texture2D::Create("bricks.png");
 	//m_pThanosTexture = Texture2D::Create("thanos.png");
 	
@@ -42,15 +44,21 @@ void Application::Run() noexcept
 		static float delta = 0.0f;
 		delta += 0.15f;
 
-		//DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(delta)) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 6.0f);
-		//DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
-		//static Transform transform{};
-		//transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
-		//m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
-		//m_pConstantBuffer->BindToVertexShader();
-		//m_pThanosTexture->BindAsShaderResource();
+		DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 6.0f);
+		DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
+		static Transform transform{};
+		transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
+		m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
+		m_pConstantBuffer->BindToVertexShader();
+		////m_pThanosTexture->BindAsShaderResource();
+		//m_pBrickTexture->BindAsShaderResource();
 		//
-		//RenderCommand::DrawIndexed(m_pMesh->GetNrOfIndices());
+
+		for (uint32_t i{ 0u }; i < m_pBackPackMeshes.size(); ++i)
+		{
+			m_pBackPackMeshes[i]->BindInternals();
+			RenderCommand::DrawIndexed(m_pBackPackMeshes[i]->GetNrOfIndices());
+		}
 
 		UI::Begin();
 		// Windows not part of the dock space goes here:
