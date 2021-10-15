@@ -56,5 +56,6 @@ public:
 private:
 	static PackagedTexture PackageTexture(const std::string& texPath);
 	static void PadTexture(PackagedTexture& tex, const BYTE* imgData, int channels);
+	static void CompressTexture(PackagedTexture& tex);
 };
 

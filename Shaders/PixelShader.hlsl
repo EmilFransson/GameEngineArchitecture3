@@ -10,6 +10,8 @@ struct PS_IN
 
 float4 ps_main(PS_IN psIn) : SV_TARGET
 {
-    float4 textureColor = shaderTexture.Sample(smplr, psIn.inTexCoords);
-    return textureColor;
+    //float4 textureColor = shaderTexture.Sample(smplr, psIn.inTexCoords);
+    //return textureColor;
+    return float4(1.0f, 1.0f, 1.0f, 1.0f);
+
 }

@@ -4,8 +4,12 @@
 #include "stb_image.h"
 
 #include "DirectXTex/DirectXTex.h"
+#include "Graphics.h"
 
 #include "OBJ_Loader.h"
+
+#define PKG_COMPRESS_TEX
+
 std::string PackageTool::Package(const char* dirPath)
 {
 	std::filesystem::directory_entry Folder = std::filesystem::directory_entry(dirPath);
@@ -45,6 +49,9 @@ std::string PackageTool::Package(const char* dirPath)
 		{
 			assetCount += 1;
 			auto texData = PackageTexture(dir_entry.path().string());
+#ifdef PKG_COMPRESS_TEX
+			CompressTexture(texData);
+#endif
 
 			ChunkHeader ch = {
 				.type = {'T', 'E', 'X', ' '},
@@ -55,11 +62,15 @@ std::string PackageTool::Package(const char* dirPath)
 			if (FAILED(hr)) assert(false); //TODO: actually handle the error
 				
 			TextureHeader th = {
-				.textureType = {'C', 'O', 'L', ' '},
+#ifdef PKG_COMPRESS_TEX
+				.textureType = {'B', 'C', '7', ' '},
+#else
+				.textureType = {'N', 'O', 'R', 'M'},
+#endif
 				.dataSize = static_cast<uint32_t>(texData.dataVec.size()),
 				.width = texData.width,
 				.height = texData.height,
-				.rowPitch = texData.width * 4
+				.rowPitch = texData.rowPitch
 			};
 
 			//Write the chunkheader
@@ -176,10 +187,6 @@ PackageTool::PackagedTexture PackageTool::PackageTexture(const std::string& texP
 	int width, height, channels;
 	auto imageData = stbi_load(texPath.c_str(), &width, &height, &channels, 0);
 	
-	// .. Compress Through DirectXTex or something ..
-
-	// TODO: stbi_image_free(imageData); // Uncomment this when the above compression has been accomplished
-	// REMOVE ONCE COMPRESSION HAS BEEN ACCOMPLISHED
 	tex.width = width;
 	tex.height = height;
 	tex.rowPitch = width * channels;
@@ -212,4 +219,35 @@ void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int chan
 		// Single channel images not supported
 		assert(false);
 	}
+	tex.rowPitch = tex.width * 4;
+}
+
+void PackageTool::CompressTexture(PackagedTexture& tex)
+{
+	DirectX::Image dxImage;
+	dxImage.pixels = tex.dataVec.data();
+	dxImage.width = tex.width;
+	dxImage.height = tex.height;
+	dxImage.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	dxImage.rowPitch = static_cast<size_t>(tex.width) * 4;
+	dxImage.slicePitch = tex.width * tex.height * 4;
+	
+	DirectX::ScratchImage scImage;
+	HRESULT hr = DirectX::Compress(Graphics::GetDevice().Get(),
+		dxImage,
+		DXGI_FORMAT_BC7_UNORM_SRGB,
+		DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL,
+		1.0,
+		scImage);
+
+	auto meta = scImage.GetMetadata();
+	auto pxSize = scImage.GetPixelsSize();
+	auto pixels = scImage.GetPixels();
+
+	tex.dataVec.clear();
+	tex.dataVec.resize(pxSize);
+	memcpy(tex.dataVec.data(), pixels, pxSize);
+	tex.rowPitch = 16 * (tex.width / 4);
+
+	scImage.Release();
 }
