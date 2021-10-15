@@ -102,10 +102,22 @@ const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName)
 			package.read((char*)&textureHeader, sizeof(PackageTool::TextureHeader));
 			std::unique_ptr<char> textureBuffer = std::unique_ptr<char>(DBG_NEW char[textureHeader.dataSize]);
 			package.read(textureBuffer.get(), textureHeader.dataSize);
-			m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width, 
-																						 textureHeader.height, 
-																						 textureHeader.rowPitch, 
-																						 textureBuffer.get()));
+			if (memcmp(textureHeader.textureType, "NORM", 4) == 0) //Normal uncompressed texture type:
+			{
+				m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
+																 textureHeader.height,
+																 textureHeader.rowPitch,
+																 textureBuffer.get(),
+																 DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM));
+			}
+			else //Compressed texture type:
+			{
+				m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
+																 textureHeader.height,
+																 textureHeader.rowPitch,
+																 textureBuffer.get(),
+																 DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB));
+			}
 		}
 		else if (memcmp(chunkHeader.type, "MESH", 4) == 0) //Asset is a mesh and should be loaded as such.
 		{

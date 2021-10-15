@@ -21,7 +21,7 @@ public:
 	[[nodiscard]] const bool LoadResourceFromPackage(const std::string& fileName) noexcept;
 	void MapPackageContent() noexcept;
 	template<typename ResourceType>
-	std::vector<std::shared_ptr<ResourceType>> LoadMultiple(const std::string& fileName) noexcept{}
+	std::vector<std::shared_ptr<ResourceType>> LoadMultiple(const std::string& fileName) noexcept {}
 	template<>
 	std::vector<std::shared_ptr<MeshOBJ>> LoadMultiple(const std::string& objName) noexcept;
 private:
@@ -34,8 +34,8 @@ private:
 	std::map<std::string, std::vector<std::string>> m_OBJToMeshesMap;
 };
 
- template<typename ResourceType>
- std::shared_ptr<ResourceType> ResourceManager::Load(const std::string& filePath) noexcept
- {
-	 // What should happen if loading a resource not supported...?
- }
+template<typename ResourceType>
+std::shared_ptr<ResourceType> ResourceManager::Load(const std::string& filePath) noexcept
+{
+	// What should happen if loading a resource not supported...?
+}

@@ -41,6 +41,7 @@ private:
 	std::unique_ptr<InputLayout> m_pInputLayout;
 	std::shared_ptr<Texture2D> m_pBrickTexture;
 	std::shared_ptr<Texture2D> m_pThanosTexture;
+	std::shared_ptr<Texture2D> m_pBackPackDiffuse;
 	std::unique_ptr<Quad> m_pQuad;
 	std::unique_ptr<Viewport> m_pViewport;
 	std::unique_ptr<PerspectiveCamera> m_pCamera;
