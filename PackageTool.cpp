@@ -6,6 +6,9 @@
 #include "DirectXTex/DirectXTex.h"
 
 #include "OBJ_Loader.h"
+
+#define PKG_COMPRESS_TEX
+
 std::string PackageTool::Package(const char* dirPath)
 {
 	std::filesystem::directory_entry Folder = std::filesystem::directory_entry(dirPath);
@@ -45,7 +48,9 @@ std::string PackageTool::Package(const char* dirPath)
 		{
 			assetCount += 1;
 			auto texData = PackageTexture(dir_entry.path().string());
+#ifdef PKG_COMPRESS_TEX
 			CompressTexture(texData);
+#endif
 
 			ChunkHeader ch = {
 				.type = {'T', 'E', 'X', ' '},
@@ -56,11 +61,15 @@ std::string PackageTool::Package(const char* dirPath)
 			if (FAILED(hr)) assert(false); //TODO: actually handle the error
 				
 			TextureHeader th = {
-				.textureType = {'C', 'O', 'L', ' '},
+#ifdef PKG_COMPRESS_TEX
+				.textureType = {'B', 'C', '7', ' '},
+#else
+				.textureType = {'N', 'O', 'R', 'M'},
+#endif
 				.dataSize = static_cast<uint32_t>(texData.dataVec.size()),
 				.width = texData.width,
 				.height = texData.height,
-				.rowPitch = texData.width * 4
+				.rowPitch = texData.rowPitch
 			};
 
 			//Write the chunkheader
@@ -177,10 +186,6 @@ PackageTool::PackagedTexture PackageTool::PackageTexture(const std::string& texP
 	int width, height, channels;
 	auto imageData = stbi_load(texPath.c_str(), &width, &height, &channels, 0);
 	
-	// .. Compress Through DirectXTex or something ..
-
-	// TODO: stbi_image_free(imageData); // Uncomment this when the above compression has been accomplished
-	// REMOVE ONCE COMPRESSION HAS BEEN ACCOMPLISHED
 	tex.width = width;
 	tex.height = height;
 	tex.rowPitch = width * channels;
@@ -213,6 +218,7 @@ void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int chan
 		// Single channel images not supported
 		assert(false);
 	}
+	tex.rowPitch = tex.width * 4;
 }
 
 void PackageTool::CompressTexture(PackagedTexture& tex)
@@ -234,4 +240,11 @@ void PackageTool::CompressTexture(PackagedTexture& tex)
 	auto meta = scImage.GetMetadata();
 	auto pxSize = scImage.GetPixelsSize();
 	auto pixels = scImage.GetPixels();
+
+	tex.dataVec.clear();
+	tex.dataVec.resize(pxSize);
+	memcpy(tex.dataVec.data(), pixels, pxSize);
+	tex.rowPitch = 16 * (tex.width / 4);
+
+	scImage.Release();
 }
