@@ -14,12 +14,24 @@ std::shared_ptr<Texture2D> ResourceManager::Load(const std::string& fileName) no
 	}
 	else
 	{
-		if (LoadResourceFromPackage(fileName))
+		if (m_PackageFileMap.contains(fileName))
 		{
+			LoadResourceFromPackage(fileName);
 			return dynamic_pointer_cast<Texture2D>(m_Map[fileName]);
 		}
-		std::cout << "Error: Unable to load asset " << fileName << "\n";
-		assert(false); //For now, just assert false.
+		else
+		{
+			std::cout << "Error: Unable to load asset " << fileName << ". Placeholder loaded instead.\n";
+			if (m_Map.contains("Grey.png"))
+			{
+				return dynamic_pointer_cast<Texture2D>(m_Map["Grey.png"]);
+			}
+			else
+			{
+				LoadResourceFromPackage("Grey.png");
+				return dynamic_pointer_cast<Texture2D>(m_Map["Grey.png"]);
+			}
+		}
 	}
 	return nullptr; //Should never be reached.
 }
@@ -183,9 +195,17 @@ void ResourceManager::MapPackageContent() noexcept
 template<>
 std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::string& objName) noexcept
 {
-
+	std::vector<std::string> meshNames;
 	//1 Retrieve the list of all mesh names:
-	std::vector<std::string> meshNames = m_OBJToMeshesMap[objName];
+	if (m_OBJToMeshesMap.contains(objName))
+	{
+		meshNames = m_OBJToMeshesMap[objName];
+	}
+	else
+	{
+		//Instead add placeholder.
+		meshNames = m_OBJToMeshesMap["Cube.obj"];
+	}
 
 	//Prepare the std::vector to be returned:
 	std::vector<std::shared_ptr<MeshOBJ>> meshes;

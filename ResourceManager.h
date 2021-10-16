@@ -29,7 +29,7 @@ private:
 	~ResourceManager() noexcept = default;
 private:
 	static ResourceManager s_Instance;
-	std::map<std::string_view, std::shared_ptr<Resource>> m_Map;
+	std::map<std::string, std::shared_ptr<Resource>> m_Map;
 	std::map<std::string, std::string> m_PackageFileMap;
 	std::map<std::string, std::vector<std::string>> m_OBJToMeshesMap;
 };
