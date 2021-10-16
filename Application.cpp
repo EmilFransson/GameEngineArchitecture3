@@ -8,7 +8,7 @@ Application::Application() noexcept
 	: m_Running{true}
 {
 	System::Initialize();
-	m_timer = DBG_NEW Time();
+	m_timer = std::make_unique<Time>();
 
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
@@ -23,6 +23,7 @@ Application::Application() noexcept
 	m_pInputLayout->Bind();
 	m_pBackPackMeshes = MeshOBJ::Create("backpack.obj");
 	m_pBackPackDiffuse = Texture2D::Create("diffuse.jpg"); //lol tex name
+	
 	//m_pThanosTexture = Texture2D::Create("thanos.png");
 	
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
