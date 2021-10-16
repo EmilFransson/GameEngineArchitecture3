@@ -183,12 +183,6 @@ void ResourceManager::MapPackageContent() noexcept
 template<>
 std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::string& objName) noexcept
 {
-	/*Vilka filer motsvaras av denna obj:n? DESSA �r de riktiga filerna, som finns i sj�lva paketet. CHUNK HEADERN inneh�ller
-	obj:ens namn, medan MESH HEADERN inneh�ller meshens namn, vilket �r sj�lva filen.
-	1. Finns obj:en med dess samtliga meshes inl�sta redan?
-	2. OM de finns inl�sta redan, fyll en vektor med samtliga och returnera dessa.
-	3. ANNARS m�ste vi l�sa in SAMTLIGA meshes som tillh�rs OBJ:n 
-	*/
 
 	//1 Retrieve the list of all mesh names:
 	std::vector<std::string> meshNames = m_OBJToMeshesMap[objName];
