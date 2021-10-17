@@ -8,7 +8,9 @@ PerspectiveCamera::PerspectiveCamera() noexcept :
 	m_forward{ 0.0f, 0.0f, 1.0f },
 	m_up{ 0.0f, 1.0f, 0.0f },
 	m_right{ 1.0f, 0.0f, 0.0f },
-	m_speed{ 20.0f }
+	m_speed{ 20.0f },
+	m_yaw{ 0.0f },
+	m_pitch{ 0.0f }
 {
 	DirectX::XMMATRIX viewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_pos), DirectX::XMLoadFloat3(&m_forward), DirectX::XMLoadFloat3(&m_up));
 	DirectX::XMStoreFloat4x4(&m_ViewMatrix, viewMatrix);
@@ -22,9 +24,19 @@ PerspectiveCamera::PerspectiveCamera() noexcept :
 void PerspectiveCamera::Update(float deltaTime)
 {
 	HandleInput(deltaTime);
-	
+
+	DirectX::XMMATRIX rotMatrix = DirectX::XMMatrixRotationRollPitchYaw(m_pitch, m_yaw, 0);
+	DirectX::XMVECTOR lookAt = DirectX::XMVector3Normalize(DirectX::XMVector3TransformCoord(DefaultForward, rotMatrix));
+
+	DirectX::XMMATRIX rotateYMatrix = DirectX::XMMatrixRotationY(m_yaw);
+	DirectX::XMStoreFloat3(&m_right, DirectX::XMVector3TransformCoord(DefaultRight, rotateYMatrix));
+	//DirectX::XMStoreFloat3(&m_up, DirectX::XMVector3TransformCoord(DirectX::XMLoadFloat3(&m_up), rotateYMatrix));
+	DirectX::XMStoreFloat3(&m_forward, DirectX::XMVector3TransformCoord(DefaultForward, rotateYMatrix));
+
+	lookAt = DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&m_pos), lookAt);
+
 	//Update view matrix.
-	DirectX::XMMATRIX viewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_pos), DirectX::XMVectorAdd(DirectX::XMLoadFloat3(&m_pos), DirectX::XMLoadFloat3(&m_forward)), DirectX::XMLoadFloat3(&m_up));
+	DirectX::XMMATRIX viewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_pos), lookAt, DirectX::XMLoadFloat3(&m_up));
 	DirectX::XMStoreFloat4x4(&m_ViewMatrix, viewMatrix);
 
 	DirectX::XMStoreFloat4x4(&m_ViewPerspectiveMatrix, viewMatrix * DirectX::XMLoadFloat4x4(&m_PerspectiveMatrix));
@@ -33,7 +45,10 @@ void PerspectiveCamera::Update(float deltaTime)
 void PerspectiveCamera::HandleInput(float deltaTime)
 {
 	std::vector<int> keyMap = Window::Get().GetKeyMap();
+	m_yaw -= Window::Get().GetDeltaMouseX() * 0.001f;
+	m_pitch -= Window::Get().GetDeltaMouseY() * 0.001f;
 
+	
 	for (auto key : keyMap)
 	{
 		switch (key)
