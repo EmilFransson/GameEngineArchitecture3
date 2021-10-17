@@ -275,6 +275,7 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 	else
 	{
 		//Instead add placeholder.
+		std::cout << "Error: Unable to load asset " << objName << ". Placeholder loaded instead.\n";
 		meshNames = m_OBJToMeshesMap["Cube.obj"];
 	}
 
