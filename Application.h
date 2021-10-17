@@ -10,6 +10,7 @@
 #include "PerspectiveCamera.h"
 #include "ResourceManager.h"
 #include "Timer.h"
+#include "Model.h"
 
 #define TOKENPASTE(x, y) x ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
