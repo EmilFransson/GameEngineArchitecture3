@@ -32,7 +32,7 @@ private:
 	void GetPackagePath() noexcept;
 private:
 	bool m_Running;
-	Time* m_timer;
+	std::unique_ptr<Time> m_timer;
 
 	std::unique_ptr<UI> m_pImGui;
 	std::vector<ProfileMetrics> m_ProfileMetrics;

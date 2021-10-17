@@ -251,11 +251,15 @@ void PackageTool::CompressTexture(PackagedTexture& tex)
 	
 	DirectX::ScratchImage scImage;
 	HRESULT hr = DirectX::Compress(Graphics::GetDevice().Get(),
-		dxImage,
-		DXGI_FORMAT_BC7_UNORM_SRGB,
-		DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL,
-		1.0,
-		scImage);
+							       dxImage,
+							       DXGI_FORMAT_BC7_UNORM_SRGB,
+							       DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL,
+							       1.0,
+							       scImage);
+	if (!SUCCEEDED(hr))
+	{
+		assert(false); //For now, just assert
+	}
 
 	auto meta = scImage.GetMetadata();
 	auto pxSize = scImage.GetPixelsSize();

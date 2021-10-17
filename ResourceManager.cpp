@@ -3,6 +3,10 @@
 #include "PackageTool.h"
 #include "OBJ_Loader.h"
 
+/* Include low level I/O */
+#include <io.h>
+#include <fcntl.h>
+
 ResourceManager ResourceManager::s_Instance;
 
 template<>
@@ -14,12 +18,28 @@ std::shared_ptr<Texture2D> ResourceManager::Load(const std::string& fileName) no
 	}
 	else
 	{
-		if (LoadResourceFromPackage(fileName))
+		if (m_PackageFileMap.contains(fileName))
 		{
-			return dynamic_pointer_cast<Texture2D>(m_Map[fileName]);
+			if (LoadResourceFromPackage(fileName))
+			{
+				return dynamic_pointer_cast<Texture2D>(m_Map[fileName]);
+			}
 		}
-		std::cout << "Error: Unable to load asset " << fileName << "\n";
-		assert(false); //For now, just assert false.
+		else
+		{
+			std::cout << "Error: Unable to load asset " << fileName << ". Placeholder loaded instead.\n";
+			if (m_Map.contains("Grey.png"))
+			{
+				return dynamic_pointer_cast<Texture2D>(m_Map["Grey.png"]);
+			}
+			else
+			{
+				if (LoadResourceFromPackage("Grey.png"))
+				{
+					return dynamic_pointer_cast<Texture2D>(m_Map["Grey.png"]);
+				}
+			}
+		}
 	}
 	return nullptr; //Should never be reached.
 }
@@ -27,30 +47,31 @@ std::shared_ptr<Texture2D> ResourceManager::Load(const std::string& fileName) no
 template<>
 std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noexcept
 {
-	std::ifstream package("Packages/" + m_PackageFileMap[fileName], std::ios::binary);
-	if (package.is_open())
+	int package_fd;
+	std::string filePath = "Packages/" + m_PackageFileMap[fileName];
+	errno_t err = _sopen_s(&package_fd, filePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+	if (err == 0)
 	{
 		PackageTool::PackageHeader packageHeader{};
-		package.read((char*)&packageHeader, sizeof(PackageTool::PackageHeader));
+		int bytes_read = _read(package_fd, (char*)&packageHeader, sizeof(PackageTool::PackageHeader));
 		bool foundOBJ = false;
-		for (uint32_t i{ 0u }; i < packageHeader.assetCount && foundOBJ == false; ++i)
+		for (uint32_t i{0u}; i < packageHeader.assetCount && foundOBJ == false; ++i)
 		{
 			PackageTool::ChunkHeader chunkHeader{};
-			package.read((char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
-			std::unique_ptr<char> pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
-			package.read(pAssetFileName.get(), chunkHeader.readableSize);
+			bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
+			_lseek(package_fd, static_cast<long>(chunkHeader.readableSize), SEEK_CUR); // Skip readable name
 			if (memcmp(chunkHeader.type, "MESH", 4) == 0)
 			{
 				PackageTool::MeshHeader meshHeader{};
-				package.read((char*)&meshHeader, sizeof(PackageTool::MeshHeader));
+				bytes_read = _read(package_fd, (char*)&meshHeader, sizeof(PackageTool::MeshHeader));
 				if (meshHeader.meshName == fileName)
 				{
 					std::vector<objl::Vertex> vertices;
 					vertices.resize(meshHeader.verticesDataSize / sizeof(objl::Vertex));
-					package.read((char*)vertices.data(), meshHeader.verticesDataSize);
+					bytes_read = _read(package_fd, (char*)vertices.data(), static_cast<unsigned int>(meshHeader.verticesDataSize));
 					std::vector<unsigned int> indices;
 					indices.resize(meshHeader.indicesDataSize / sizeof(unsigned int));
-					package.read((char*)indices.data(), meshHeader.indicesDataSize);
+					bytes_read = _read(package_fd, (char*)indices.data(), static_cast<unsigned int>(meshHeader.indicesDataSize));
 					if (strcmp(meshHeader.materialName, "") != 0)
 					{
 						m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, 
@@ -65,15 +86,15 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noex
 				}
 				else
 				{
-					package.seekg(chunkHeader.chunkSize - sizeof(PackageTool::MeshHeader), std::ios_base::cur);
+					_lseek(package_fd, chunkHeader.chunkSize - sizeof(PackageTool::MeshHeader), SEEK_CUR);
 				}
 			}
 			else
 			{
-				package.seekg(chunkHeader.chunkSize, std::ios_base::cur);
+				_lseek(package_fd, chunkHeader.chunkSize, SEEK_CUR);
 			}
 		}
-		package.close();
+		_close(package_fd);
 	}
 	else
 	{
@@ -91,40 +112,41 @@ std::shared_ptr<Material> ResourceManager::Load(const std::string& materialName)
 	}
 	else
 	{
-		std::ifstream package("Packages/" + m_PackageFileMap[materialName], std::ios::binary);
-		if (package.is_open())
+		int package_fd;
+		std::string filePath = "Packages/" + m_PackageFileMap[materialName];
+		errno_t err = _sopen_s(&package_fd, filePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+		if (err == 0)
 		{
 			PackageTool::PackageHeader packageHeader{};
-			package.read((char*)&packageHeader, sizeof(PackageTool::PackageHeader));
+			int bytes_read = _read(package_fd, (char*)&packageHeader, sizeof(PackageTool::PackageHeader));
 			bool foundMaterial = false;
 			PackageTool::MaterialHeader materialHeader{};
 			for (uint32_t i{ 0u }; i < packageHeader.assetCount && foundMaterial == false; ++i)
 			{
 				PackageTool::ChunkHeader chunkHeader{};
-				package.read((char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
-				std::unique_ptr<char> pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
-				package.read(pAssetFileName.get(), chunkHeader.readableSize);
+				bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
+				_lseek(package_fd, static_cast<long>(chunkHeader.readableSize), SEEK_CUR); // Skip readable name
 				if (memcmp(chunkHeader.type, "MAT", 3) == 0)
 				{
-					package.read((char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
+					bytes_read = _read(package_fd, (char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
 					if (strcmp(materialHeader.materialName, materialName.c_str()) == 0)
 					{
 						foundMaterial = true;
 					}
 					else
 					{
-						package.seekg(chunkHeader.chunkSize - sizeof(PackageTool::MaterialHeader), std::ios_base::cur);
+						_lseek(package_fd, chunkHeader.chunkSize - sizeof(PackageTool::MaterialHeader), SEEK_CUR);
 					}
 				}
 				else
 				{
-					package.seekg(chunkHeader.chunkSize, std::ios_base::cur);
+					_lseek(package_fd, chunkHeader.chunkSize, SEEK_CUR);
 				}
 			}
 			if (foundMaterial)
 			{
 				PackageTool::SMaterial material{};
-				package.read((char*)&material, materialHeader.dataSize);
+				bytes_read = _read(package_fd, (char*)&material, materialHeader.dataSize);
 				m_Map[materialName] = dynamic_pointer_cast<Resource>(std::make_shared<Material>(material));
 				return dynamic_pointer_cast<Material>(m_Map[materialName]);
 			}
@@ -135,33 +157,36 @@ std::shared_ptr<Material> ResourceManager::Load(const std::string& materialName)
 
 const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName) noexcept
 {
-	std::ifstream package("Packages/" + m_PackageFileMap[fileName], std::ios::binary);
-	if (package.is_open())
+	int package_fd;
+	std::string filePath = "Packages/";
+	filePath += std::string(m_PackageFileMap[fileName]);
+	errno_t err = _sopen_s(&package_fd, filePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+	if(err == 0)
 	{
 		PackageTool::PackageHeader packageHeader{};
-		package.read((char*)&packageHeader, sizeof(PackageTool::PackageHeader));
+		int bytes_read = _read(package_fd, (char*)&packageHeader, sizeof(PackageTool::PackageHeader));
 		bool foundAsset = false;
 		PackageTool::ChunkHeader chunkHeader{};
 		for (uint32_t i{ 0u }; i < packageHeader.assetCount && foundAsset == false; ++i)
 		{
-			package.read((char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
+			bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
 			std::unique_ptr<char> pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
-			package.read(pAssetFileName.get(), chunkHeader.readableSize);
-			if (strcmp(pAssetFileName.get(), fileName.c_str()) == 0)
+			bytes_read = _read(package_fd, pAssetFileName.get(), static_cast<unsigned int>(chunkHeader.readableSize));
+			if (std::string(pAssetFileName.get()) == fileName)
 			{
 				foundAsset = true;
 			}
 			else
 			{
-				package.seekg(chunkHeader.chunkSize, std::ios_base::cur);
+				_lseek(package_fd, chunkHeader.chunkSize, SEEK_CUR);
 			}
 		}
 		if (memcmp(chunkHeader.type, "TEX", 3) == 0) //Asset is a texture and should be loaded as such.
 		{
 			PackageTool::TextureHeader textureHeader{};
-			package.read((char*)&textureHeader, sizeof(PackageTool::TextureHeader));
+			bytes_read = _read(package_fd, (char*)&textureHeader, sizeof(PackageTool::TextureHeader));
 			std::unique_ptr<char> textureBuffer = std::unique_ptr<char>(DBG_NEW char[textureHeader.dataSize]);
-			package.read(textureBuffer.get(), textureHeader.dataSize);
+			bytes_read = _read(package_fd, textureBuffer.get(), textureHeader.dataSize);
 			if (memcmp(textureHeader.textureType, "NORM", 4) == 0) //Normal uncompressed texture type:
 			{
 				m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
@@ -179,7 +204,7 @@ const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName)
 																 DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB));
 			}
 		}
-		package.close();
+		_close(package_fd);
 		return true;
 	}
 	return false;
@@ -192,45 +217,47 @@ void ResourceManager::MapPackageContent() noexcept
 	{
 		if (!m_PackageFileMap.contains(package.path().filename().string())) // Do not re-map a package that has already been mapped.
 		{
-			std::ifstream packageFile("Packages/" + package.path().filename().string(), std::ios::binary);
-			if (packageFile.is_open())
+			int package_fd;
+			std::string packagePath = "Packages/" + package.path().filename().string();
+			errno_t err = _sopen_s(&package_fd, packagePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+			if (err == 0)
 			{
 				PackageTool::PackageHeader pkgHdr{};
-				packageFile.read((char*)&pkgHdr, sizeof(PackageTool::PackageHeader));
+				int bytes_read = _read(package_fd, (char*)&pkgHdr, sizeof(PackageTool::PackageHeader));
 				for (uint32_t i{ 0u }; i < pkgHdr.assetCount; ++i)
 				{
 					PackageTool::ChunkHeader chkHdr{};
-					packageFile.read((char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
+					bytes_read = _read(package_fd, (char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
 					std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1](0));
-					packageFile.read(fileName.get(), chkHdr.readableSize);
+					bytes_read = _read(package_fd, fileName.get(), static_cast<unsigned int>(chkHdr.readableSize));
 
 					if (memcmp(chkHdr.type, "MESH", 4) == 0)
 					{
 						//Find the correct mesh name:
 						PackageTool::MeshHeader meshHeader{};
-						packageFile.read((char*)&meshHeader, sizeof(PackageTool::MeshHeader));
+						bytes_read = _read(package_fd, (char*)&meshHeader, sizeof(PackageTool::MeshHeader)); 
 						m_PackageFileMap[meshHeader.meshName] = package.path().filename().string();
 						
 						m_OBJToMeshesMap[fileName.get()].push_back(meshHeader.meshName);
 						if (i != pkgHdr.assetCount - 1u)
-							packageFile.seekg(chkHdr.chunkSize - sizeof(PackageTool::MeshHeader), std::ios_base::cur);
+							_lseek(package_fd, chkHdr.chunkSize - sizeof(PackageTool::MeshHeader), SEEK_CUR);
 					}
 					else if (memcmp(chkHdr.type, "MAT", 3) == 0)
 					{
 						PackageTool::MaterialHeader materialHeader{};
-						packageFile.read((char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
+						bytes_read = _read(package_fd, (char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
 						m_PackageFileMap[materialHeader.materialName] = package.path().filename().string();
 						if (i != pkgHdr.assetCount - 1u)
-							packageFile.seekg(chkHdr.chunkSize - sizeof(PackageTool::MaterialHeader), std::ios_base::cur);
+							_lseek(package_fd, chkHdr.chunkSize - sizeof(PackageTool::MaterialHeader), SEEK_CUR);
 					}
 					else
 					{
 						m_PackageFileMap[fileName.get()] = package.path().filename().string();
 						if (i != pkgHdr.assetCount - 1u)
-							packageFile.seekg(chkHdr.chunkSize, std::ios_base::cur);
+							_lseek(package_fd, chkHdr.chunkSize, SEEK_CUR);
 					}
 				}
-				packageFile.close();
+				_close(package_fd);
 			}
 		}
 	}
@@ -239,15 +266,17 @@ void ResourceManager::MapPackageContent() noexcept
 template<>
 std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::string& objName) noexcept
 {
-	/*Vilka filer motsvaras av denna obj:n? DESSA är de riktiga filerna, som finns i själva paketet. CHUNK HEADERN innehåller
-	obj:ens namn, medan MESH HEADERN innehåller meshens namn, vilket är själva filen.
-	1. Finns obj:en med dess samtliga meshes inlästa redan?
-	2. OM de finns inlästa redan, fyll en vektor med samtliga och returnera dessa.
-	3. ANNARS måste vi läsa in SAMTLIGA meshes som tillhörs OBJ:n 
-	*/
-
+	std::vector<std::string> meshNames;
 	//1 Retrieve the list of all mesh names:
-	std::vector<std::string> meshNames = m_OBJToMeshesMap[objName];
+	if (m_OBJToMeshesMap.contains(objName))
+	{
+		meshNames = m_OBJToMeshesMap[objName];
+	}
+	else
+	{
+		//Instead add placeholder.
+		meshNames = m_OBJToMeshesMap["Cube.obj"];
+	}
 
 	//Prepare the std::vector to be returned:
 	std::vector<std::shared_ptr<MeshOBJ>> meshes;
