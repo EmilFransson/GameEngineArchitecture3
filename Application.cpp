@@ -21,11 +21,13 @@ Application::Application() noexcept
 	m_pVertexShader->Bind();
 	m_pPixelShader->Bind();
 	m_pInputLayout->Bind();
-	m_pBackPackMeshes = MeshOBJ::Create("backpack.obj");
-	m_pBackPackDiffuse = Texture2D::Create("diffuse.jpg"); //lol tex name
 	
-	//m_pThanosTexture = Texture2D::Create("thanos.png");
-	
+	//Create models 
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 2.0f, 1.0f)));
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 1.0f, 2.0f)));
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(-10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 2.0f, 1.0f)));
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(20.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 2.0f)));
+
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pViewport = std::make_unique<Viewport>();
 	m_pViewport->Bind();
@@ -46,20 +48,27 @@ void Application::Run() noexcept
 
 		static float delta = 0.0f;
 		delta += static_cast<float>(m_timer->DeltaTime()) * 10.0f;
-
-		DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(delta)) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 6.0f);
-		DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
-		static Transform transform{};
-		transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
-		m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
-		m_pConstantBuffer->BindToVertexShader();
-		//m_pThanosTexture->BindAsShaderResource();
 		
-		m_pBackPackDiffuse->BindAsShaderResource();
-		for (uint32_t i{ 0u }; i < m_pBackPackMeshes.size(); ++i)
+		DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
+
+		//For every model.
+		for (uint32_t i{ 0u }; i < m_pModels.size(); i++)
 		{
-			m_pBackPackMeshes[i]->BindInternals();
-			RenderCommand::DrawIndexed(m_pBackPackMeshes[i]->GetNrOfIndices());
+			m_pModels[i]->Update(static_cast<float>(delta));
+
+			static Transform transform{};
+			transform.wvpMatrix = DirectX::XMMatrixTranspose(m_pModels[i]->GetWMatrix() * viewPerspectiveMatrix);
+			m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
+			m_pConstantBuffer->BindToVertexShader();
+
+			//Bind texture for this model.
+			m_pModels[i]->BindTexture();
+			//Bind the meshes in the model one by one and draw them.
+			for (uint32_t j{ 0u }; j < m_pModels[i]->GetNrOfMeshes(); j++)
+			{
+				m_pModels[i]->BindMesh(j);
+				RenderCommand::DrawIndexed(m_pModels[i]->GetNrOfMeshIndices(j));
+			}
 		}
 
 		UI::Begin();

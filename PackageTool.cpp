@@ -218,8 +218,9 @@ void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int chan
 		assert(false);
 	if (channels == 4)
 	{
-		tex.dataVec.resize(tex.width * tex.height * 4u);
-		memcpy(tex.dataVec.data(), imgData, tex.width * tex.height * 4u);
+		//tex.dataVec.resize(tex.width * tex.height * 4u);
+		//memcpy(tex.dataVec.data(), imgData, tex.width * tex.height * 4u);
+		tex.dataVec = std::vector(imgData, imgData + tex.width * tex.height * 4u + 1);
 	}
 	else if (channels == 3)
 	{

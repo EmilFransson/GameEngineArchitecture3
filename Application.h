@@ -10,6 +10,7 @@
 #include "PerspectiveCamera.h"
 #include "ResourceManager.h"
 #include "Timer.h"
+#include "Model.h"
 
 #define TOKENPASTE(x, y) x ## y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
@@ -33,6 +34,8 @@ private:
 private:
 	bool m_Running;
 	std::unique_ptr<Time> m_timer;
+
+	std::vector<std::unique_ptr<Model>> m_pModels;
 
 	std::unique_ptr<UI> m_pImGui;
 	std::vector<ProfileMetrics> m_ProfileMetrics;
