@@ -47,4 +47,5 @@ private:
 	std::unique_ptr<PerspectiveCamera> m_pCamera;
 	std::unique_ptr<ConstantBuffer> m_pConstantBuffer;
 	std::vector<std::shared_ptr<MeshOBJ>> m_pBackPackMeshes;
+
 };

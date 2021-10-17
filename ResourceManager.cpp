@@ -10,33 +10,33 @@
 ResourceManager ResourceManager::s_Instance;
 
 template<>
-std::shared_ptr<Texture2D> ResourceManager::Load(const std::string& fileName) noexcept
+std::shared_ptr<Texture2D> ResourceManager::Load(const std::pair<uint64_t, uint64_t>& guid) noexcept
 {
-	if (m_Map.contains(fileName))
+	if (m_GUIDToResourceMap.contains(guid))
 	{
-		return dynamic_pointer_cast<Texture2D>(m_Map[fileName]);
+		return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
 	}
 	else
 	{
-		if (m_PackageFileMap.contains(fileName))
+		if (m_GUIDToPackageMap.contains(guid))
 		{
-			if (LoadResourceFromPackage(fileName))
+			if (LoadResourceFromPackage(guid))
 			{
-				return dynamic_pointer_cast<Texture2D>(m_Map[fileName]);
+				return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
 			}
 		}
 		else
 		{
-			std::cout << "Error: Unable to load asset " << fileName << ". Placeholder loaded instead.\n";
-			if (m_Map.contains("Grey.png"))
+			std::cout << "Error: Unable to load asset " <<  "Placeholder loaded instead.\n";
+			if (m_GUIDToResourceMap.contains(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])))
 			{
-				return dynamic_pointer_cast<Texture2D>(m_Map["Grey.png"]);
+				return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
 			}
 			else
 			{
-				if (LoadResourceFromPackage("Grey.png"))
+				if (LoadResourceFromPackage(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])))
 				{
-					return dynamic_pointer_cast<Texture2D>(m_Map["Grey.png"]);
+					return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
 				}
 			}
 		}
@@ -45,10 +45,10 @@ std::shared_ptr<Texture2D> ResourceManager::Load(const std::string& fileName) no
 }
 
 template<>
-std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noexcept
+std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::pair<uint64_t, uint64_t>& guid) noexcept
 {
 	int package_fd;
-	std::string filePath = "Packages/" + m_PackageFileMap[fileName];
+	std::string filePath = "Packages/" + std::string(m_GUIDToPackageMap[guid]);
 	errno_t err = _sopen_s(&package_fd, filePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
 	if (err == 0)
 	{
@@ -64,7 +64,7 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noex
 			{
 				PackageTool::MeshHeader meshHeader{};
 				bytes_read = _read(package_fd, (char*)&meshHeader, sizeof(PackageTool::MeshHeader));
-				if (meshHeader.meshName == fileName)
+				if (ConvertGUIDToPair(chunkHeader.guid) == guid)
 				{
 					std::vector<objl::Vertex> vertices;
 					vertices.resize(meshHeader.verticesDataSize / sizeof(objl::Vertex));
@@ -74,15 +74,15 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noex
 					bytes_read = _read(package_fd, (char*)indices.data(), static_cast<unsigned int>(meshHeader.indicesDataSize));
 					if (strcmp(meshHeader.materialName, "") != 0)
 					{
-						m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, 
-																								   indices, 
-																								   Load<Material>(meshHeader.materialName)));
+						m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices,
+																				   indices, 
+																				   Load<Material>(ConvertGUIDToPair(m_FileNameToGUIDMap[meshHeader.materialName]))));
 					}
 					else
 					{
-						m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices));
+						m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices));
 					}
-					return dynamic_pointer_cast<MeshOBJ>(m_Map[fileName]);
+					return dynamic_pointer_cast<MeshOBJ>(m_GUIDToResourceMap[guid]);
 				}
 				else
 				{
@@ -104,16 +104,16 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noex
 }
 
 template<>
-std::shared_ptr<Material> ResourceManager::Load(const std::string& materialName) noexcept
+std::shared_ptr<Material> ResourceManager::Load(const std::pair<uint64_t, uint64_t>& guid) noexcept
 {
-	if (m_Map.contains(materialName))
+	if (m_GUIDToResourceMap.contains(guid))
 	{
-		return dynamic_pointer_cast<Material>(m_Map[materialName]);
+		return dynamic_pointer_cast<Material>(m_GUIDToResourceMap[guid]);
 	}
 	else
 	{
 		int package_fd;
-		std::string filePath = "Packages/" + m_PackageFileMap[materialName];
+		std::string filePath = "Packages/" + std::string(m_GUIDToPackageMap[guid]);
 		errno_t err = _sopen_s(&package_fd, filePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
 		if (err == 0)
 		{
@@ -129,7 +129,7 @@ std::shared_ptr<Material> ResourceManager::Load(const std::string& materialName)
 				if (memcmp(chunkHeader.type, "MAT", 3) == 0)
 				{
 					bytes_read = _read(package_fd, (char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
-					if (strcmp(materialHeader.materialName, materialName.c_str()) == 0)
+					if (ConvertGUIDToPair(chunkHeader.guid) == guid)
 					{
 						foundMaterial = true;
 					}
@@ -147,19 +147,19 @@ std::shared_ptr<Material> ResourceManager::Load(const std::string& materialName)
 			{
 				PackageTool::SMaterial material{};
 				bytes_read = _read(package_fd, (char*)&material, materialHeader.dataSize);
-				m_Map[materialName] = dynamic_pointer_cast<Resource>(std::make_shared<Material>(material));
-				return dynamic_pointer_cast<Material>(m_Map[materialName]);
+				m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<Material>(material));
+				return dynamic_pointer_cast<Material>(m_GUIDToResourceMap[guid]);
 			}
 		}
 	}
 	return nullptr; //Should never be reached.
 }
 
-const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName) noexcept
+const bool ResourceManager::LoadResourceFromPackage(const std::pair<uint64_t, uint64_t>& guid) noexcept
 {
 	int package_fd;
 	std::string filePath = "Packages/";
-	filePath += std::string(m_PackageFileMap[fileName]);
+	filePath += std::string(m_GUIDToPackageMap[guid]);
 	errno_t err = _sopen_s(&package_fd, filePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
 	if(err == 0)
 	{
@@ -172,7 +172,7 @@ const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName)
 			bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
 			std::unique_ptr<char> pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
 			bytes_read = _read(package_fd, pAssetFileName.get(), static_cast<unsigned int>(chunkHeader.readableSize));
-			if (std::string(pAssetFileName.get()) == fileName)
+			if (ConvertGUIDToPair(chunkHeader.guid) == guid)
 			{
 				foundAsset = true;
 			}
@@ -189,7 +189,7 @@ const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName)
 			bytes_read = _read(package_fd, textureBuffer.get(), textureHeader.dataSize);
 			if (memcmp(textureHeader.textureType, "NORM", 4) == 0) //Normal uncompressed texture type:
 			{
-				m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
+				m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
 																 textureHeader.height,
 																 textureHeader.rowPitch,
 																 textureBuffer.get(),
@@ -197,7 +197,7 @@ const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName)
 			}
 			else //Compressed texture type:
 			{
-				m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
+				m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
 																 textureHeader.height,
 																 textureHeader.rowPitch,
 																 textureBuffer.get(),
@@ -215,52 +215,64 @@ void ResourceManager::MapPackageContent() noexcept
 	std::vector<std::filesystem::directory_entry> packages;
 	for (const auto& package : std::filesystem::directory_iterator("Packages/"))
 	{
-		if (!m_PackageFileMap.contains(package.path().filename().string())) // Do not re-map a package that has already been mapped.
+		int package_fd;
+		std::string packagePath = "Packages/" + package.path().filename().string();
+		errno_t err = _sopen_s(&package_fd, packagePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
+		if (err == 0)
 		{
-			int package_fd;
-			std::string packagePath = "Packages/" + package.path().filename().string();
-			errno_t err = _sopen_s(&package_fd, packagePath.c_str(), _O_BINARY | _O_RDONLY, _SH_DENYWR, _S_IREAD);
-			if (err == 0)
+			PackageTool::PackageHeader pkgHdr{};
+			int bytes_read = _read(package_fd, (char*)&pkgHdr, sizeof(PackageTool::PackageHeader));
+			for (uint32_t i{ 0u }; i < pkgHdr.assetCount; ++i)
 			{
-				PackageTool::PackageHeader pkgHdr{};
-				int bytes_read = _read(package_fd, (char*)&pkgHdr, sizeof(PackageTool::PackageHeader));
-				for (uint32_t i{ 0u }; i < pkgHdr.assetCount; ++i)
+				PackageTool::ChunkHeader chkHdr{};
+				bytes_read = _read(package_fd, (char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
+				std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1](0));
+				bytes_read = _read(package_fd, fileName.get(), static_cast<unsigned int>(chkHdr.readableSize));
+				if (memcmp(chkHdr.type, "MESH", 4) == 0)
 				{
-					PackageTool::ChunkHeader chkHdr{};
-					bytes_read = _read(package_fd, (char*)&chkHdr, sizeof(PackageTool::ChunkHeader));
-					std::unique_ptr<char> fileName = std::unique_ptr<char>(DBG_NEW char[chkHdr.readableSize + 1](0));
-					bytes_read = _read(package_fd, fileName.get(), static_cast<unsigned int>(chkHdr.readableSize));
+					//Find the correct mesh name:
+					PackageTool::MeshHeader meshHeader{};
+					bytes_read = _read(package_fd, (char*)&meshHeader, sizeof(PackageTool::MeshHeader));
 
-					if (memcmp(chkHdr.type, "MESH", 4) == 0)
-					{
-						//Find the correct mesh name:
-						PackageTool::MeshHeader meshHeader{};
-						bytes_read = _read(package_fd, (char*)&meshHeader, sizeof(PackageTool::MeshHeader)); 
-						m_PackageFileMap[meshHeader.meshName] = package.path().filename().string();
-						
-						m_OBJToMeshesMap[fileName.get()].push_back(meshHeader.meshName);
-						if (i != pkgHdr.assetCount - 1u)
-							_lseek(package_fd, chkHdr.chunkSize - sizeof(PackageTool::MeshHeader), SEEK_CUR);
-					}
-					else if (memcmp(chkHdr.type, "MAT", 3) == 0)
-					{
-						PackageTool::MaterialHeader materialHeader{};
-						bytes_read = _read(package_fd, (char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
-						m_PackageFileMap[materialHeader.materialName] = package.path().filename().string();
-						if (i != pkgHdr.assetCount - 1u)
-							_lseek(package_fd, chkHdr.chunkSize - sizeof(PackageTool::MaterialHeader), SEEK_CUR);
-					}
-					else
-					{
-						m_PackageFileMap[fileName.get()] = package.path().filename().string();
-						if (i != pkgHdr.assetCount - 1u)
-							_lseek(package_fd, chkHdr.chunkSize, SEEK_CUR);
-					}
+					m_GUIDToPackageMap[ConvertGUIDToPair(chkHdr.guid)] = package.path().filename().string();
+					m_FileNameToGUIDMap[meshHeader.meshName] = chkHdr.guid;
+					m_OBJToMeshesMap[fileName.get()].push_back(meshHeader.meshName);
+					if (i != pkgHdr.assetCount - 1u)
+						_lseek(package_fd, chkHdr.chunkSize - sizeof(PackageTool::MeshHeader), SEEK_CUR);
 				}
-				_close(package_fd);
+				else if (memcmp(chkHdr.type, "MAT", 3) == 0)
+				{
+					PackageTool::MaterialHeader materialHeader{};
+					bytes_read = _read(package_fd, (char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
+					m_GUIDToPackageMap[ConvertGUIDToPair(chkHdr.guid)] = package.path().filename().string();
+					m_FileNameToGUIDMap[materialHeader.materialName] = chkHdr.guid;
+					if (i != pkgHdr.assetCount - 1u)
+						_lseek(package_fd, chkHdr.chunkSize - sizeof(PackageTool::MaterialHeader), SEEK_CUR);
+				}
+				else
+				{
+					m_GUIDToPackageMap[ConvertGUIDToPair(chkHdr.guid)] = package.path().filename().string();
+					m_FileNameToGUIDMap[fileName.get()] = chkHdr.guid;
+					if (i != pkgHdr.assetCount - 1u)
+						_lseek(package_fd, chkHdr.chunkSize, SEEK_CUR);
+				}
 			}
+			_close(package_fd);
 		}
 	}
+}
+
+std::pair<uint64_t, uint64_t> ResourceManager::ConvertGUIDToPair(const GUID& guid) noexcept
+{
+	auto split = (uint64_t*)&guid;
+	return std::make_pair(split[0], split[1]);
+}
+
+GUID ResourceManager::ConvertPairToGUID(const std::pair<uint64_t, uint64_t> pGuid) noexcept
+{
+	auto guid = *(GUID*)&pGuid;
+	
+	return guid;
 }
 
 template<>
@@ -287,9 +299,9 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 	//Load all meshes directly from cache that has already been loaded from the package:
 	for (uint32_t i{0u}; i < meshNames.size(); ++i)
 	{
-		if (m_Map.contains(meshNames[i]))
+		if (m_GUIDToResourceMap.contains(ConvertGUIDToPair(m_FileNameToGUIDMap[meshNames[i]])))
 		{
-			meshes.push_back(dynamic_pointer_cast<MeshOBJ>(m_Map[meshNames[i]]));
+			meshes.push_back(dynamic_pointer_cast<MeshOBJ>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap[meshNames[i]])]));
 			meshesLoadedFlags[i] = true;
 		}
 	}
@@ -300,7 +312,7 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 		if (meshesLoadedFlags[i] == false)
 		{
 			//This mesh has not been loaded from cache (since it didn't exist) and must now be loaded from the package:
-			meshes.push_back(std::move(Load<MeshOBJ>(meshNames[i])));
+			meshes.push_back(std::move(Load<MeshOBJ>(ConvertGUIDToPair(m_FileNameToGUIDMap[meshNames[i]]))));
 		}
 	}
 	return meshes;
