@@ -51,7 +51,16 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noex
 					std::vector<unsigned int> indices;
 					indices.resize(meshHeader.indicesDataSize / sizeof(unsigned int));
 					package.read((char*)indices.data(), meshHeader.indicesDataSize);
-					m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices));
+					if (strcmp(meshHeader.materialName, "") != 0)
+					{
+						m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, 
+																								   indices, 
+																								   Load<Material>(meshHeader.materialName)));
+					}
+					else
+					{
+						m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices));
+					}
 					return dynamic_pointer_cast<MeshOBJ>(m_Map[fileName]);
 				}
 				else
@@ -71,6 +80,57 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::string& fileName) noex
 		//...
 	}
 	return nullptr;
+}
+
+template<>
+std::shared_ptr<Material> ResourceManager::Load(const std::string& materialName) noexcept
+{
+	if (m_Map.contains(materialName))
+	{
+		return dynamic_pointer_cast<Material>(m_Map[materialName]);
+	}
+	else
+	{
+		std::ifstream package("Packages/" + m_PackageFileMap[materialName], std::ios::binary);
+		if (package.is_open())
+		{
+			PackageTool::PackageHeader packageHeader{};
+			package.read((char*)&packageHeader, sizeof(PackageTool::PackageHeader));
+			bool foundMaterial = false;
+			PackageTool::MaterialHeader materialHeader{};
+			for (uint32_t i{ 0u }; i < packageHeader.assetCount && foundMaterial == false; ++i)
+			{
+				PackageTool::ChunkHeader chunkHeader{};
+				package.read((char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
+				std::unique_ptr<char> pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
+				package.read(pAssetFileName.get(), chunkHeader.readableSize);
+				if (memcmp(chunkHeader.type, "MAT", 3) == 0)
+				{
+					package.read((char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
+					if (strcmp(materialHeader.materialName, materialName.c_str()) == 0)
+					{
+						foundMaterial = true;
+					}
+					else
+					{
+						package.seekg(chunkHeader.chunkSize - sizeof(PackageTool::MaterialHeader), std::ios_base::cur);
+					}
+				}
+				else
+				{
+					package.seekg(chunkHeader.chunkSize, std::ios_base::cur);
+				}
+			}
+			if (foundMaterial)
+			{
+				PackageTool::SMaterial material{};
+				package.read((char*)&material, materialHeader.dataSize);
+				m_Map[materialName] = dynamic_pointer_cast<Resource>(std::make_shared<Material>(material));
+				return dynamic_pointer_cast<Material>(m_Map[materialName]);
+			}
+		}
+	}
+	return nullptr; //Should never be reached.
 }
 
 const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName) noexcept
@@ -119,18 +179,6 @@ const bool ResourceManager::LoadResourceFromPackage(const std::string& fileName)
 																 DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB));
 			}
 		}
-		else if (memcmp(chunkHeader.type, "MESH", 4) == 0) //Asset is a mesh and should be loaded as such.
-		{
-			PackageTool::MeshHeader meshHeader{};
-			package.read((char*)&meshHeader, sizeof(PackageTool::MeshHeader));
-			std::vector<objl::Vertex> vertices;
-			vertices.resize(meshHeader.verticesDataSize / sizeof(objl::Vertex));
-			package.read((char*)vertices.data(), meshHeader.verticesDataSize);
-			std::vector<unsigned int> indices;
-			indices.resize(meshHeader.indicesDataSize / sizeof(unsigned int));
-			package.read((char*)indices.data(), meshHeader.indicesDataSize);
-			m_Map[fileName] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices));
-		}
 		package.close();
 		return true;
 	}
@@ -166,6 +214,14 @@ void ResourceManager::MapPackageContent() noexcept
 						m_OBJToMeshesMap[fileName.get()].push_back(meshHeader.meshName);
 						if (i != pkgHdr.assetCount - 1u)
 							packageFile.seekg(chkHdr.chunkSize - sizeof(PackageTool::MeshHeader), std::ios_base::cur);
+					}
+					else if (memcmp(chkHdr.type, "MAT", 3) == 0)
+					{
+						PackageTool::MaterialHeader materialHeader{};
+						packageFile.read((char*)&materialHeader, sizeof(PackageTool::MaterialHeader));
+						m_PackageFileMap[materialHeader.materialName] = package.path().filename().string();
+						if (i != pkgHdr.assetCount - 1u)
+							packageFile.seekg(chkHdr.chunkSize - sizeof(PackageTool::MaterialHeader), std::ios_base::cur);
 					}
 					else
 					{
@@ -215,9 +271,8 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 		if (meshesLoadedFlags[i] == false)
 		{
 			//This mesh has not been loaded from cache (since it didn't exist) and must now be loaded from the package:
-			meshes.push_back(Load<MeshOBJ>(meshNames[i]));
+			meshes.push_back(std::move(Load<MeshOBJ>(meshNames[i])));
 		}
 	}
-
 	return meshes;
 }

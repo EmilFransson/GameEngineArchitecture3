@@ -1,6 +1,10 @@
 #pragma once
 #include "Texture.h"
 #include "Mesh.h"
+#include "Material.h"
+
+
+
 
 class ResourceManager
 {
@@ -18,6 +22,8 @@ public:
 	std::shared_ptr<Texture2D> Load(const std::string& fileName) noexcept;
 	template<>
 	std::shared_ptr<MeshOBJ> Load(const std::string& fileName) noexcept;
+	template<>
+	std::shared_ptr<Material> Load(const std::string& materialName) noexcept;
 	[[nodiscard]] const bool LoadResourceFromPackage(const std::string& fileName) noexcept;
 	void MapPackageContent() noexcept;
 	template<typename ResourceType>
@@ -29,7 +35,7 @@ private:
 	~ResourceManager() noexcept = default;
 private:
 	static ResourceManager s_Instance;
-	std::map<std::string_view, std::shared_ptr<Resource>> m_Map;
+	std::map<std::string, std::shared_ptr<Resource>> m_Map;
 	std::map<std::string, std::string> m_PackageFileMap;
 	std::map<std::string, std::vector<std::string>> m_OBJToMeshesMap;
 };
