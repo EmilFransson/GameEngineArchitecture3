@@ -138,7 +138,7 @@ LRESULT Window::HandleMessages(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 		if (!keyFound)
 		{
-			m_keyMap.push_back(wParam);
+			m_keyMap.push_back(static_cast<int>(wParam));
 		}
 		break;
 	}

@@ -6,7 +6,6 @@
 #include "DirectXTex/DirectXTex.h"
 #include "Graphics.h"
 
-#include "OBJ_Loader.h"
 
 #define PKG_COMPRESS_TEX
 
@@ -92,9 +91,27 @@ std::string PackageTool::Package(const char* dirPath)
 	{
 		assetCount += 1;
 
+		SMaterial sMaterial;
+		strcpy_s(sMaterial.fileName, 30, currentMat.fileName.c_str());
+		strcpy_s(sMaterial.name, 30, currentMat.name.c_str());
+		sMaterial.Ka = currentMat.Ka;
+		sMaterial.Kd = currentMat.Kd;
+		sMaterial.Ks = currentMat.Ks;
+		sMaterial.Ni = currentMat.Ni;
+		sMaterial.d = currentMat.d;
+		sMaterial.Ns = currentMat.Ns;
+		sMaterial.illum = currentMat.illum;
+		strcpy_s(sMaterial.map_Ka, 30, currentMat.map_Ka.c_str());
+		strcpy_s(sMaterial.map_Kd, 30, currentMat.map_Kd.c_str());
+		strcpy_s(sMaterial.map_Ks, 30, currentMat.map_Ks.c_str());
+		strcpy_s(sMaterial.map_Ns, 30, currentMat.map_Ns.c_str());
+		strcpy_s(sMaterial.map_Ka, 30, currentMat.map_Ka.c_str());
+		strcpy_s(sMaterial.map_bump, 30, currentMat.map_bump.c_str());
+		strcpy_s(sMaterial.map_d, 30, currentMat.map_d.c_str());
+
 		ChunkHeader ch = {
 				.type = {'M', 'A', 'T', ' '},
-				.chunkSize = sizeof(MaterialHeader) + sizeof(objl::Material), // 4 channels for DirectX RGBA Textures
+				.chunkSize = sizeof(MaterialHeader) + sizeof(SMaterial), // 4 channels for DirectX RGBA Textures
 				.readableSize = currentMat.fileName.length()
 		};
 		HRESULT hr = CoCreateGuid(&ch.guid);
@@ -102,7 +119,7 @@ std::string PackageTool::Package(const char* dirPath)
 
 		MaterialHeader mh = {
 			.materialName = { 0 },
-			.dataSize = sizeof(objl::Material)
+			.dataSize = sizeof(SMaterial)
 		};
 		//Copy in the name.
 		currentMat.name.copy(mh.materialName, currentMat.name.size());
@@ -117,7 +134,7 @@ std::string PackageTool::Package(const char* dirPath)
 		packageFile.write((char*)(&mh), sizeof(MaterialHeader));
 		size += sizeof(MaterialHeader);
 		//Write the data to the file
-		packageFile.write((char*)(&currentMat), mh.dataSize);
+		packageFile.write((char*)(&sMaterial), mh.dataSize);
 		size += mh.dataSize;
 	}
 
@@ -201,8 +218,9 @@ void PackageTool::PadTexture(PackagedTexture& tex, const BYTE* imgData, int chan
 		assert(false);
 	if (channels == 4)
 	{
-		tex.dataVec.resize(tex.width * tex.height * 4u);
-		memcpy(tex.dataVec.data(), imgData, tex.width * tex.height * 4u);
+		//tex.dataVec.resize(tex.width * tex.height * 4u);
+		//memcpy(tex.dataVec.data(), imgData, tex.width * tex.height * 4u);
+		tex.dataVec = std::vector(imgData, imgData + tex.width * tex.height * 4u + 1);
 	}
 	else if (channels == 3)
 	{
@@ -234,11 +252,15 @@ void PackageTool::CompressTexture(PackagedTexture& tex)
 	
 	DirectX::ScratchImage scImage;
 	HRESULT hr = DirectX::Compress(Graphics::GetDevice().Get(),
-		dxImage,
-		DXGI_FORMAT_BC7_UNORM_SRGB,
-		DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL,
-		1.0,
-		scImage);
+							       dxImage,
+							       DXGI_FORMAT_BC7_UNORM_SRGB,
+							       DirectX::TEX_COMPRESS_BC7_QUICK | DirectX::TEX_COMPRESS_PARALLEL,
+							       1.0,
+							       scImage);
+	if (!SUCCEEDED(hr))
+	{
+		assert(false); //For now, just assert
+	}
 
 	auto meta = scImage.GetMetadata();
 	auto pxSize = scImage.GetPixelsSize();

@@ -1,4 +1,5 @@
 #pragma once
+#include "OBJ_Loader.h"
 class PackageTool
 {
 private:
@@ -46,6 +47,39 @@ public:
 	{
 		char materialName[64];
 		uint32_t dataSize;
+	};
+
+	struct SMaterial
+	{
+		char fileName[30];
+		// Material Name
+		char name[30];
+		// Ambient Color
+		objl::Vector3 Ka;
+		// Diffuse Color
+		objl::Vector3 Kd;
+		// Specular Color
+		objl::Vector3 Ks;
+		// Specular Exponent
+		float Ns;
+		// Optical Density
+		float Ni;
+		// Dissolve
+		float d;
+		// Illumination
+		int illum;
+		// Ambient Texture Map
+		char map_Ka[30];
+		// Diffuse Texture Map
+		char map_Kd[30];
+		// Specular Texture Map
+		char map_Ks[30];
+		// Specular Hightlight Map
+		char map_Ns[30];
+		// Alpha Texture Map
+		char map_d[30];
+		// Bump Map
+		char map_bump[30];
 	};
 private:
 public:
