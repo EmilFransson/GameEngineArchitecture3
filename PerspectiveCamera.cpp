@@ -41,29 +41,43 @@ void PerspectiveCamera::HandleInput(float deltaTime)
 		case 87: //w
 		{
 			m_pos.x += (deltaTime * m_forward.x * m_speed);
-			m_pos.y += (deltaTime * m_forward.y * m_speed);
+			
 			m_pos.z += (deltaTime * m_forward.z * m_speed);
 			break;
 		}
 		case 65: //a
 		{
 			m_pos.x -= (deltaTime * m_right.x * m_speed);
-			m_pos.y -= (deltaTime * m_right.y * m_speed);
+			
 			m_pos.z -= (deltaTime * m_right.z * m_speed);
 			break;
 		}
 		case 83: //s
 		{
 			m_pos.x -= (deltaTime * m_forward.x * m_speed);
-			m_pos.y -= (deltaTime * m_forward.y * m_speed);
+			
 			m_pos.z -= (deltaTime * m_forward.z * m_speed);
 			break;
 		}
 		case 68: //d
 		{
 			m_pos.x += (deltaTime * m_right.x * m_speed);
-			m_pos.y += (deltaTime * m_right.y * m_speed);
+			
 			m_pos.z += (deltaTime * m_right.z * m_speed);
+			break;
+		}
+		case 32: //Space
+		{
+
+			m_pos.y += (deltaTime * m_up.y * m_speed);
+
+			break;
+		}
+		case 16: //Space
+		{
+
+			m_pos.y -= (deltaTime * m_up.y * m_speed);
+
 			break;
 		}
 		default:

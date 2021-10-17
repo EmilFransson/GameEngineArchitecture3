@@ -35,6 +35,8 @@ private:
 	bool m_Running;
 	std::unique_ptr<Time> m_timer;
 
+	std::vector<std::unique_ptr<Model>> m_pModels;
+
 	std::unique_ptr<UI> m_pImGui;
 	std::vector<ProfileMetrics> m_ProfileMetrics;
 	std::unique_ptr<VertexShader> m_pVertexShader;
