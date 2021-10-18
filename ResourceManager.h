@@ -40,12 +40,15 @@ private:
 		s_Instance = this;
 	}
 	~ResourceManager() noexcept = default;
+	void FreeMemory() noexcept;
 private:
 	static ResourceManager* s_Instance;
 
 	std::map<std::pair<uint64_t, uint64_t>, std::shared_ptr<Resource>> m_GUIDToResourceMap;
 	std::map<std::pair<uint64_t, uint64_t>, std::string> m_GUIDToPackageMap;
 	std::map<std::string, std::vector<std::string>> m_OBJToMeshesMap;
+	uint64_t m_CurrentByteSize = 0u;
+	uint64_t m_MaxByteSize = 8000u;
 private:
 
 	struct JobHolder

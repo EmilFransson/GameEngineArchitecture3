@@ -33,10 +33,10 @@ Application::Application() noexcept
 	//m_pThanosTexture = Texture2D::Create("thanos.png");
 	
 	//Create models 
-	m_pModels.push_back(std::make_unique<Model>("cube.obj", "bricks.png", DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 2.0f, 1.0f)));
-	m_pModels.push_back(std::make_unique<Model>("cube.obj", "bricks.png", DirectX::XMFLOAT3(10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 1.0f, 2.0f)));
-	m_pModels.push_back(std::make_unique<Model>("cube.obj", "bricks.png", DirectX::XMFLOAT3(-10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 2.0f, 1.0f)));
-	m_pModels.push_back(std::make_unique<Model>("cube.obj", "bricks.png", DirectX::XMFLOAT3(20.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 2.0f)));
+	m_pModels.push_back(std::make_unique<Model>("CubeLevel1.obj", "bricks.png", DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 2.0f, 1.0f)));
+	m_pModels.push_back(std::make_unique<Model>("CubeLevel1.obj", "bricks.png", DirectX::XMFLOAT3(10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 1.0f, 2.0f)));
+	m_pModels.push_back(std::make_unique<Model>("CubeLevel1.obj", "bricks.png", DirectX::XMFLOAT3(-10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 2.0f, 1.0f)));
+	m_pModels.push_back(std::make_unique<Model>("CubeLevel1.obj", "bricks.png", DirectX::XMFLOAT3(20.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 2.0f)));
 
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pViewport = std::make_unique<Viewport>();
@@ -61,7 +61,6 @@ void Application::Run() noexcept
 		if (level1)
 		{
 			float len = sqrt(currentPos.x * currentPos.x + currentPos.y * currentPos.y + currentPos.z * currentPos.z);
-			std::cout << len << std::endl;
 			if (len > 30.0f )
 			{
 				level1 = false;

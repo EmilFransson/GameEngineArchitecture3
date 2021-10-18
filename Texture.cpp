@@ -6,7 +6,8 @@
 #include "Utility.h"
 
 Texture::Texture(const uint32_t width, const uint32_t height, std::string fileName) noexcept
-	:m_pShaderResourceView{ nullptr },
+	:Resource{fileName},
+	m_pShaderResourceView{ nullptr },
 	m_Width{ width },
 	m_Height{ height },
 	m_FileName{ fileName }

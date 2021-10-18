@@ -39,10 +39,61 @@ void ResourceManager::CleanUp()
 	delete s_Instance;
 }
 
+void ResourceManager::FreeMemory() noexcept
+{
+	std::vector<std::pair<uint64_t, uint64_t>> keys;
+	for (auto it = m_GUIDToResourceMap.begin(); it != m_GUIDToResourceMap.end(); it++)
+	{
+		if (it->second.use_count() == 1 && (it->second->GetName() != "Cube.obj" || it->second->GetName() != "Grey.png"))
+		{
+			std::string name = it->second->GetName();
+			name = name.substr(name.find_first_of("."), name.size() - 1);
+			if (name == ".obj")
+			{
+				m_CurrentByteSize -= sizeof(Mesh);
+			}
+			else if (name == ".mtl")
+			{
+				m_CurrentByteSize -= sizeof(Material);
+			}
+			else
+			{
+				m_CurrentByteSize -= sizeof(Texture2D);
+			}
+			std::cout << "Unncecessary resource(s) removed.\nCurrent Byte size after deletion: " << m_CurrentByteSize << "\n";
+			keys.push_back(it->first);
+		}
+	}
+	for (auto& key : keys)
+	{
+		m_GUIDToResourceMap.erase(key);
+	}
+}
+
 template<>
 std::shared_ptr<Texture2D> ResourceManager::Load(const std::pair<uint64_t, uint64_t>& guid) noexcept
 {
-	if (!m_GUIDToResourceMap.contains(guid) && !m_GUIDToPackageMap.contains(guid))
+	bool result = true;
+	{
+		std::unique_lock<std::mutex> lock(m_GUIDToMutexMap[guid]);
+		if (m_GUIDToResourceMap.contains(guid))
+		{
+			return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
+		}
+		else
+		{
+			if (m_GUIDToPackageMap.contains(guid))
+			{
+				result = LoadResourceFromPackage(guid);
+				if (result == true)
+				{
+					return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
+				}
+			}
+		}
+	}
+
+	if ((!m_GUIDToResourceMap.contains(guid) && !m_GUIDToPackageMap.contains(guid)) || !result)
 	{
 		std::unique_lock<std::mutex> lock(m_GUIDToMutexMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
 
@@ -60,21 +111,7 @@ std::shared_ptr<Texture2D> ResourceManager::Load(const std::pair<uint64_t, uint6
 		}
 	}
 
-	std::unique_lock<std::mutex> lock(m_GUIDToMutexMap[guid]);
-	if (m_GUIDToResourceMap.contains(guid))
-	{
-		return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
-	}
-	else
-	{
-		if (m_GUIDToPackageMap.contains(guid))
-		{
-			if (LoadResourceFromPackage(guid))
-			{
-				return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
-			}
-		}
-	}
+	
 
 	return nullptr; //Should never be reached.
 }
@@ -96,7 +133,7 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::pair<uint64_t, uint64_
 			bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
 
 			std::unique_ptr<char> objName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
-			bytes_read = _read(package_fd, objName.get(), chunkHeader.readableSize);
+			bytes_read = _read(package_fd, objName.get(), static_cast<unsigned int>(chunkHeader.readableSize));
 			//_lseek(package_fd, static_cast<long>(chunkHeader.readableSize), SEEK_CUR); // Skip readable name
 
 			if (memcmp(chunkHeader.type, "MESH", 4) == 0)
@@ -111,6 +148,19 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::pair<uint64_t, uint64_
 					std::vector<unsigned int> indices;
 					indices.resize(meshHeader.indicesDataSize / sizeof(unsigned int));
 					bytes_read = _read(package_fd, (char*)indices.data(), static_cast<unsigned int>(meshHeader.indicesDataSize));
+
+					if (m_CurrentByteSize + sizeof(MeshOBJ) > m_MaxByteSize)
+					{
+						std::cout << "WARNING: Approaching max byte size limit. Attempting to free unused assets.\n";
+						FreeMemory();
+						if (m_CurrentByteSize + sizeof(MeshOBJ) > m_MaxByteSize)
+						{
+							std::cout << "Error: Cannot create resource. Unable to free enough memory.\n";
+							return nullptr;
+						}
+					}
+					m_CurrentByteSize += sizeof(MeshOBJ);
+					std::cout << "Current Byte size: " << m_CurrentByteSize << "\n";
 					if (strcmp(meshHeader.materialName, "") != 0)
 					{
 						m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices,
@@ -185,9 +235,21 @@ std::shared_ptr<Material> ResourceManager::Load(const std::pair<uint64_t, uint64
 			}
 			if (foundMaterial)
 			{
+				if (m_CurrentByteSize + sizeof(Material) > m_MaxByteSize)
+				{
+					std::cout << "WARNING: Approaching max byte size limit. Attempting to free unused assets.\n";
+					FreeMemory();
+					if (m_CurrentByteSize + sizeof(Material) > m_MaxByteSize)
+					{
+						std::cout << "Error: Cannot create resource. Unable to free enough memory.\n";
+						return nullptr;
+					}
+				}
+				m_CurrentByteSize += sizeof(Material);
+				std::cout << "Current Byte size: " << m_CurrentByteSize << "\n";
 				PackageTool::SMaterial material{};
 				bytes_read = _read(package_fd, (char*)&material, materialHeader.dataSize);
-				m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<Material>(material));
+				m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<Material>(material, materialHeader.materialName));
 				return dynamic_pointer_cast<Material>(m_GUIDToResourceMap[guid]);
 			}
 		}
@@ -228,6 +290,19 @@ const bool ResourceManager::LoadResourceFromPackage(const std::pair<uint64_t, ui
 			bytes_read = _read(package_fd, (char*)&textureHeader, sizeof(PackageTool::TextureHeader));
 			std::unique_ptr<char> textureBuffer = std::unique_ptr<char>(DBG_NEW char[textureHeader.dataSize]);
 			bytes_read = _read(package_fd, textureBuffer.get(), textureHeader.dataSize);
+
+			if (m_CurrentByteSize + sizeof(Texture2D) > m_MaxByteSize)
+			{
+				std::cout << "WARNING: Approaching max byte size limit. Attempting to free unused assets.\n";
+				FreeMemory();
+				if (m_CurrentByteSize + sizeof(Texture2D) > m_MaxByteSize)
+				{
+					std::cout << "Error: Cannot create resource. Unable to free enough memory.\n";
+					return false;
+				}
+			}
+			m_CurrentByteSize += sizeof(Texture2D);
+			std::cout << "Current Byte size: " << m_CurrentByteSize << "\n";
 			if (memcmp(textureHeader.textureType, "NORM", 4) == 0) //Normal uncompressed texture type:
 			{
 				m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<Texture2D>(textureHeader.width,
@@ -303,6 +378,10 @@ void ResourceManager::MapPackageContent() noexcept
 			_close(package_fd);
 		}
 	}
+
+	//Load place holder objects:
+	Load<Texture2D>(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"]));
+	Load<MeshOBJ>(ConvertGUIDToPair(m_FileNameToGUIDMap["Cube.obj"]));
 }
 
 std::pair<uint64_t, uint64_t> ResourceManager::ConvertGUIDToPair(const GUID& guid) noexcept
@@ -358,7 +437,15 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(std::string&
 		if (meshesLoadedFlags[i] == false)
 		{
 			//This mesh has not been loaded from cache (since it didn't exist) and must now be loaded from the package:
-			meshes.push_back(std::move(Load<MeshOBJ>(ConvertGUIDToPair(m_FileNameToGUIDMap[meshNames[i]]))));
+			std::shared_ptr<MeshOBJ> pMesh = Load<MeshOBJ>(ConvertGUIDToPair(m_FileNameToGUIDMap[meshNames[i]]));
+			if (pMesh == nullptr)
+			{
+				std::unique_lock<std::mutex> lock2(m_GUIDToMutexMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Cube"])]);
+
+				std::cout << "Error: Unable to load asset " << "Placeholder loaded instead.\n";
+				pMesh = dynamic_pointer_cast<MeshOBJ>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Cube"])]);
+			}
+			meshes.push_back(std::move(pMesh));
 		}
 	}
 	return meshes;

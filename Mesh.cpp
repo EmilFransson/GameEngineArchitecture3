@@ -5,8 +5,17 @@
 #include "Utility.h"
 #include "ResourceManager.h"
 
+Mesh::Mesh(const std::string& assetName) noexcept
+	: Resource{assetName}
+{
+}
+
 MeshOBJ::MeshOBJ(const std::vector<objl::Vertex>& vertices, const std::vector<unsigned int> indices, const std::shared_ptr<Material>& pMaterial, std::string fileName) noexcept
-	: m_NrOfIndices{ indices.size() }, m_Strides{ sizeof(objl::Vertex)}, m_pMaterial{pMaterial}, m_FileName{ fileName }
+	: Mesh{fileName},
+	  m_NrOfIndices{ indices.size() }, 
+	  m_Strides{ sizeof(objl::Vertex)}, 
+	  m_pMaterial{pMaterial}, 
+	  m_FileName{ fileName }
 {
 	D3D11_BUFFER_DESC vertexBufferDescriptor{};
 	vertexBufferDescriptor.ByteWidth = sizeof(objl::Vertex) * static_cast<UINT>(vertices.size());

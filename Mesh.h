@@ -5,7 +5,7 @@
 class Mesh : public Resource
 {
 public:
-	Mesh() noexcept = default;
+	Mesh(const std::string& assetName) noexcept;
 	virtual ~Mesh() noexcept override = default;
 	virtual void BindInternals(const uint8_t slot = 0u) noexcept = 0;
 protected:
