@@ -48,7 +48,6 @@ void PerspectiveCamera::HandleInput(float deltaTime)
 	m_yaw -= Window::Get().GetDeltaMouseX() * 0.001f;
 
 	m_pitch -= Window::Get().GetDeltaMouseY() * 0.001f;
-	std::cout << m_pitch << std::endl;
 	if (m_pitch > DirectX::XM_PIDIV2 - 0.1f)
 	{
 		m_pitch = DirectX::XM_PIDIV2 - 0.1f;

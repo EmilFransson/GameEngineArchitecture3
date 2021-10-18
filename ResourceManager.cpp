@@ -42,6 +42,25 @@ void ResourceManager::CleanUp()
 template<>
 std::shared_ptr<Texture2D> ResourceManager::Load(const std::pair<uint64_t, uint64_t>& guid) noexcept
 {
+	if (!m_GUIDToResourceMap.contains(guid) && !m_GUIDToPackageMap.contains(guid))
+	{
+		std::unique_lock<std::mutex> lock(m_GUIDToMutexMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
+
+		std::cout << "Error: Unable to load asset " << "Placeholder loaded instead.\n";
+		if (m_GUIDToResourceMap.contains(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])))
+		{
+			return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
+		}
+		else
+		{
+			if (LoadResourceFromPackage(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])))
+			{
+				return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
+			}
+		}
+	}
+
+	std::unique_lock<std::mutex> lock(m_GUIDToMutexMap[guid]);
 	if (m_GUIDToResourceMap.contains(guid))
 	{
 		return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
@@ -55,22 +74,8 @@ std::shared_ptr<Texture2D> ResourceManager::Load(const std::pair<uint64_t, uint6
 				return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[guid]);
 			}
 		}
-		else
-		{
-			std::cout << "Error: Unable to load asset " <<  "Placeholder loaded instead.\n";
-			if (m_GUIDToResourceMap.contains(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])))
-			{
-				return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
-			}
-			else
-			{
-				if (LoadResourceFromPackage(ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])))
-				{
-					return dynamic_pointer_cast<Texture2D>(m_GUIDToResourceMap[ConvertGUIDToPair(m_FileNameToGUIDMap["Grey.png"])]);
-				}
-			}
-		}
 	}
+
 	return nullptr; //Should never be reached.
 }
 
@@ -306,7 +311,7 @@ GUID ResourceManager::ConvertPairToGUID(const std::pair<uint64_t, uint64_t> pGui
 }
 
 template<>
-std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::string& objName) noexcept
+std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(std::string& objName) noexcept
 {
 	std::vector<std::string> meshNames;
 	//1 Retrieve the list of all mesh names:
@@ -319,6 +324,7 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 		//Instead add placeholder.
 		std::cout << "Error: Unable to load asset " << objName << ". Placeholder loaded instead.\n";
 		meshNames = m_OBJToMeshesMap["Cube.obj"];
+		objName = "Cube.obj";
 	}
 
 	//Prepare the std::vector to be returned:
@@ -327,6 +333,7 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 	//Have a std::vector containing flags for whether a certain mesh has been loaded or not
 	std::vector<bool> meshesLoadedFlags(meshNames.size(), 0);
 
+	std::unique_lock<std::mutex> lock(m_FilenameToMutexMap[objName]);
 	//Load all meshes directly from cache that has already been loaded from the package:
 	for (uint32_t i{0u}; i < meshNames.size(); ++i)
 	{
@@ -349,14 +356,45 @@ std::vector<std::shared_ptr<MeshOBJ>> ResourceManager::LoadMultiple(const std::s
 	return meshes;
 }
 
+void ResourceManager::tAddJob(std::string filename, std::shared_ptr<Texture2D>* memory, std::vector<std::shared_ptr<MeshOBJ>>* memoryVec)
+{
+	std::string extension = filename.substr(filename.find_last_of('.'), filename.size() - 1);
+	if (extension == ".obj")
+	{
+		//Set placeholder model in memory parameter.
+		std::string cubeName = "Cube.obj";
+		*memoryVec = MeshOBJ::Create(cubeName);
+	}
+	else if (extension == ".png" || extension == ".jpg")
+	{
+		//Set placeholder texture in memory parameter.
+		*memory = Texture2D::Create("Grey.png");
+	}
+	
+	{
+		std::unique_lock<std::mutex> lock(m_tQueueMutex);
+		m_tQueue.push_back(DBG_NEW JobHolder(tFindResource, filename, extension, memory, memoryVec));
+	}
+	//Notify a waiting thread.
+	m_tCondition.notify_one();
+	
+}
 
-void ResourceManager::tFindResource(std::string filename, std::string extension, std::shared_ptr<Resource>* memory)
+void ResourceManager::tFindResource(std::string filename, std::string extension, std::shared_ptr<Texture2D>* memory, std::vector<std::shared_ptr<MeshOBJ>>* memoryVec)
 {
 	if (extension == ".obj")
 	{
-		*memory = MeshOBJ::Create(filename);
+		std::vector<std::shared_ptr<MeshOBJ>> temp = MeshOBJ::Create(filename);
+		
+		(*memoryVec).clear();
+		for (size_t i = 0; i < temp.size(); i++)
+		{
+			(*memoryVec).push_back(temp[i]);
+		}
+		
+		//*memoryVec = (MeshOBJ::Create(filename)));
 	}
-	else if (extension == ".png")
+	else if (extension == ".png" || extension == ".jpg")
 	{
 		*memory = Texture2D::Create(filename);
 	}
@@ -385,7 +423,7 @@ void ResourceManager::tWaitForJob(
 			Job = m_tQueue.front();
 			m_tQueue.pop_front();
 		}
-		Job->m_job(Job->m_filename, Job->m_extension, Job->m_memory);
+		Job->m_job(Job->m_filename, Job->m_extension, Job->m_memory, Job->m_memoryVec);
 		delete Job;
 	}
 }

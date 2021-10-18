@@ -51,8 +51,7 @@ void MeshOBJ::BindInternals(const uint8_t slot) noexcept
 	CHECK_STD(Graphics::GetContext()->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0u));
 }
 
-std::vector<std::shared_ptr<MeshOBJ>> MeshOBJ::Create(const std::string& fileName) noexcept
+std::vector<std::shared_ptr<MeshOBJ>> MeshOBJ::Create(std::string& fileName) noexcept
 {
-	return ResourceManager::Get().LoadMultiple<MeshOBJ>(fileName);
+	return ResourceManager::Get()->LoadMultiple<MeshOBJ>(fileName);
 }
-

@@ -14,7 +14,7 @@ Application::Application() noexcept
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
 	m_pImGui = std::make_unique<UI>();
-	ResourceManager::Get().MapPackageContent();
+	ResourceManager::Get()->MapPackageContent();
 
 	m_pVertexShader = std::make_unique<VertexShader>("Shaders/VertexShader.hlsl");
 	m_pPixelShader = std::make_unique<PixelShader>("Shaders/PixelShader.hlsl");
@@ -25,7 +25,7 @@ Application::Application() noexcept
 	//m_pMesh = MeshOBJ::Create("backpack.obj");
 	//m_pMesh->BindInternals();
 	//
-	//ResourceManager::Get()->tAddJob("Cube.obj", m_pBrickTexture.get());
+	//ResourceManager::Get()->tAddJob("Cube.obj", nullptr, &m_pBackPackMeshes);
 	//ResourceManager::Get()->tAddJob<Texture2D>("bricks.png", &m_pBrickTexture);
 	//m_pBrickTexture = Texture2D::Create("bricks.png");
 	// 

@@ -1,13 +1,16 @@
 #include "pch.h"
 #include "Model.h"
+#include "ResourceManager.h"
 
 Model::Model(std::string obj, std::string tex, DirectX::XMFLOAT3 startPos, DirectX::XMFLOAT3 startScale) noexcept :
 	m_scale{ startScale },
 	m_pos{ startPos }
 {
 	//m_wMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&startPos));
-	m_pMeshes = MeshOBJ::Create(obj);
-	m_pTexture = Texture2D::Create(tex);
+	ResourceManager::Get()->tAddJob(obj, nullptr, &m_pMeshes);
+	ResourceManager::Get()->tAddJob(tex, &m_pTexture, nullptr);
+	//m_pMeshes = MeshOBJ::Create(obj);
+	//m_pTexture = Texture2D::Create(tex);
 }
 
 void Model::Update(float deltaTime)

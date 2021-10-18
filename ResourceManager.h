@@ -24,9 +24,9 @@ public:
 	[[nodiscard]] const bool LoadResourceFromPackage(const std::pair<uint64_t, uint64_t>& guid) noexcept;
 	void MapPackageContent() noexcept;
 	template<typename ResourceType>
-	std::vector<std::shared_ptr<ResourceType>> LoadMultiple(const std::string& fileName) noexcept {}
+	std::vector<std::shared_ptr<ResourceType>> LoadMultiple(std::string& fileName) noexcept {}
 	template<>
-	std::vector<std::shared_ptr<MeshOBJ>> LoadMultiple(const std::string& objName) noexcept;
+	std::vector<std::shared_ptr<MeshOBJ>> LoadMultiple(std::string& objName) noexcept;
 	std::pair<uint64_t, uint64_t> ConvertGUIDToPair(const GUID& guid) noexcept;
 	GUID ConvertPairToGUID(const std::pair<uint64_t, uint64_t> pGuid) noexcept;
 	std::map<std::string, GUID> m_FileNameToGUIDMap;
@@ -47,20 +47,25 @@ private:
 	std::map<std::pair<uint64_t, uint64_t>, std::string> m_GUIDToPackageMap;
 	std::map<std::string, std::vector<std::string>> m_OBJToMeshesMap;
 private:
+	std::map<std::string, std::mutex> m_FilenameToMutexMap; //Used for objs
+	std::map<std::pair<uint64_t, uint64_t>, std::mutex> m_GUIDToMutexMap;	//Used for textures
+
 	struct JobHolder
 	{
 		JobHolder() = default;
-		JobHolder(std::function<void(std::string, std::string, std::shared_ptr<Resource>*)> newJob, std::string filename, std::string extension, std::shared_ptr<Resource>* memory)
+		JobHolder(std::function<void(std::string, std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*)> newJob, std::string filename, std::string extension, std::shared_ptr<Texture2D>* memory, std::vector<std::shared_ptr<MeshOBJ>>* memoryVec)
 		{
 			m_job = newJob;
 			m_filename = filename;
 			m_extension = extension;
 			m_memory = memory;
+			m_memoryVec = memoryVec;
 		}
-		std::function<void(std::string, std::string, std::shared_ptr<Resource>*)> m_job;
+		std::function<void(std::string, std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*)> m_job;
 		std::string m_filename;
 		std::string m_extension;
-		std::shared_ptr<Resource>* m_memory;
+		std::shared_ptr<Texture2D>* m_memory;
+		std::vector<std::shared_ptr<MeshOBJ>>* m_memoryVec;
 	};
 	static std::vector<std::thread> m_tWorkers;
 	static size_t m_numThreads;
@@ -72,37 +77,11 @@ private:
 	static bool m_tTerminate;
 
 	static void tWaitForJob();		//The threadfunction.
-	static void tFindResource(std::string, std::string, std::shared_ptr<Resource>*);	//Function that is sent into the addJob function. The actual "work" for the thread.
+	static void tFindResource(std::string, std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*);	//Function that is sent into the addJob function. The actual "work" for the thread.
 	void tShutdown();		//Called at shutdown.
 public:
-	template <typename T>
-	void tAddJob(std::string, std::shared_ptr<T>*);	//Called to add a new job to the queue for the threads to do.
+	void tAddJob(std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*);	//Called to add a new job to the queue for the threads to do.
 };
-
-template <typename T>
-void ResourceManager::tAddJob(std::string filename, std::shared_ptr<T>* memory)
-{
-	std::string extension = filename.substr(filename.find_last_of('.'), filename.size() - 1);
-	if (extension == ".obj")
-	{
-		//Set placeholder model in memory parameter.
-
-	}
-	else if (extension == ".png")
-	{
-		//Set placeholder texture in memory parameter.
-		*memory = Texture2D::Create("thanos.png");
-	}
-
-	//Add the job to the queue.
-	{
-		std::unique_lock<std::mutex> lock(m_tQueueMutex);
-		m_tQueue.push_back(DBG_NEW JobHolder(tFindResource, filename, extension, reinterpret_cast<std::shared_ptr<Resource>*>(memory)));
-	}
-	//Notify a waiting thread.
-	m_tCondition.notify_one();
-}
-
 
 template<typename ResourceType>
 std::shared_ptr<ResourceType> ResourceManager::Load(const std::pair<uint64_t, uint64_t>& guid) noexcept
