@@ -33,6 +33,7 @@
 #include <Objbase.h>
 #include <fstream>
 #include <filesystem>
+#include <cmath>
 
 // Iostream - STD I/O Library
 //#include <iostream>

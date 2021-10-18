@@ -89,7 +89,7 @@ void Window::Initialize(const std::wstring& windowTitle, const uint32_t width, c
 
 	Rid[0].usUsagePage = 0x01;          // HID_USAGE_PAGE_GENERIC
 	Rid[0].usUsage = 0x02;              // HID_USAGE_GENERIC_MOUSE
-	Rid[0].dwFlags = RIDEV_NOLEGACY;    // adds mouse and also ignores legacy mouse messages
+	Rid[0].dwFlags = 0;    // adds mouse and also ignores legacy mouse messages
 	Rid[0].hwndTarget = 0;
 	RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
 
@@ -118,11 +118,12 @@ const bool Window::OnUpdate()
 {
 	m_deltaMouseX = 0.0f;
 	m_deltaMouseY = 0.0f;
+	/*
 	if (!m_cursorShow)
 	{
 		SetCursorPos(GetSystemMetrics(SM_CXSCREEN) / 2, GetSystemMetrics(SM_CYSCREEN) / 2);
 	}
-
+	*/
 	while (PeekMessage(&m_WindowMessage, nullptr, 0u, 0u, PM_REMOVE))
 	{
 		TranslateMessage(&m_WindowMessage);
@@ -145,6 +146,10 @@ LRESULT Window::HandleMessages(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		m_Running = false;
 		break;
 	}
+	case WM_LBUTTONDOWN:
+	{
+		break;
+	}
 	case WM_INPUT:
 	{
 		UINT dwSize;
@@ -163,12 +168,13 @@ LRESULT Window::HandleMessages(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 		if (raw->header.dwType == RIM_TYPEMOUSE)
 		{
+			/*
 			if (raw->data.mouse.usButtonFlags == RI_MOUSE_LEFT_BUTTON_DOWN)
 			{
 				ShowCursor(!m_cursorShow);
 				m_cursorShow = !m_cursorShow;
 			}
-			
+			*/
 			m_deltaMouseX = -raw->data.mouse.lLastX;
 			m_deltaMouseY = -raw->data.mouse.lLastY;
 		}
