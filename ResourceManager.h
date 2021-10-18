@@ -47,8 +47,6 @@ private:
 	std::map<std::pair<uint64_t, uint64_t>, std::string> m_GUIDToPackageMap;
 	std::map<std::string, std::vector<std::string>> m_OBJToMeshesMap;
 private:
-	std::map<std::string, std::mutex> m_FilenameToMutexMap; //Used for objs
-	std::map<std::pair<uint64_t, uint64_t>, std::mutex> m_GUIDToMutexMap;	//Used for textures
 
 	struct JobHolder
 	{
@@ -80,6 +78,9 @@ private:
 	static void tFindResource(std::string, std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*);	//Function that is sent into the addJob function. The actual "work" for the thread.
 	void tShutdown();		//Called at shutdown.
 public:
+	std::map<std::string, std::mutex> m_FilenameToMutexMap; //Used for objs
+	std::map<std::pair<uint64_t, uint64_t>, std::mutex> m_GUIDToMutexMap;	//Used for textures
+
 	void tAddJob(std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*);	//Called to add a new job to the queue for the threads to do.
 };
 

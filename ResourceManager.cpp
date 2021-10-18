@@ -94,7 +94,11 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::pair<uint64_t, uint64_
 		{
 			PackageTool::ChunkHeader chunkHeader{};
 			bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
-			_lseek(package_fd, static_cast<long>(chunkHeader.readableSize), SEEK_CUR); // Skip readable name
+
+			std::unique_ptr<char> objName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
+			bytes_read = _read(package_fd, objName.get(), chunkHeader.readableSize);
+			//_lseek(package_fd, static_cast<long>(chunkHeader.readableSize), SEEK_CUR); // Skip readable name
+
 			if (memcmp(chunkHeader.type, "MESH", 4) == 0)
 			{
 				PackageTool::MeshHeader meshHeader{};
@@ -111,11 +115,12 @@ std::shared_ptr<MeshOBJ> ResourceManager::Load(const std::pair<uint64_t, uint64_
 					{
 						m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices,
 																				   indices, 
-																				   Load<Material>(ConvertGUIDToPair(m_FileNameToGUIDMap[meshHeader.materialName]))));
+																				   Load<Material>(ConvertGUIDToPair(m_FileNameToGUIDMap[meshHeader.materialName])),
+																				   objName.get()));
 					}
 					else
 					{
-						m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices));
+						m_GUIDToResourceMap[guid] = dynamic_pointer_cast<Resource>(std::make_shared<MeshOBJ>(vertices, indices, nullptr, objName.get()));
 					}
 					return dynamic_pointer_cast<MeshOBJ>(m_GUIDToResourceMap[guid]);
 				}
@@ -202,10 +207,11 @@ const bool ResourceManager::LoadResourceFromPackage(const std::pair<uint64_t, ui
 		int bytes_read = _read(package_fd, (char*)&packageHeader, sizeof(PackageTool::PackageHeader));
 		bool foundAsset = false;
 		PackageTool::ChunkHeader chunkHeader{};
+		std::unique_ptr<char> pAssetFileName;
 		for (uint32_t i{ 0u }; i < packageHeader.assetCount && foundAsset == false; ++i)
 		{
 			bytes_read = _read(package_fd, (char*)&chunkHeader, sizeof(PackageTool::ChunkHeader));
-			std::unique_ptr<char> pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
+			pAssetFileName = std::unique_ptr<char>(DBG_NEW char[chunkHeader.readableSize + 1](0));
 			bytes_read = _read(package_fd, pAssetFileName.get(), static_cast<unsigned int>(chunkHeader.readableSize));
 			if (ConvertGUIDToPair(chunkHeader.guid) == guid)
 			{
@@ -228,7 +234,8 @@ const bool ResourceManager::LoadResourceFromPackage(const std::pair<uint64_t, ui
 																 textureHeader.height,
 																 textureHeader.rowPitch,
 																 textureBuffer.get(),
-																 DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM));
+																 DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM,
+																 pAssetFileName.get()));
 			}
 			else //Compressed texture type:
 			{
@@ -236,7 +243,8 @@ const bool ResourceManager::LoadResourceFromPackage(const std::pair<uint64_t, ui
 																 textureHeader.height,
 																 textureHeader.rowPitch,
 																 textureBuffer.get(),
-																 DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB));
+																 DXGI_FORMAT::DXGI_FORMAT_BC7_UNORM_SRGB,
+																 pAssetFileName.get()));
 			}
 		}
 		_close(package_fd);

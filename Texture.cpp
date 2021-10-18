@@ -5,15 +5,16 @@
 #include "ResourceManager.h"
 #include "Utility.h"
 
-Texture::Texture(const uint32_t width, const uint32_t height) noexcept
+Texture::Texture(const uint32_t width, const uint32_t height, std::string fileName) noexcept
 	:m_pShaderResourceView{ nullptr },
 	m_Width{ width },
-	m_Height{ height }
+	m_Height{ height },
+	m_FileName{ fileName }
 {
 }
 
-Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t rowPitch, void* pData, const DXGI_FORMAT textureFormat) noexcept
-	: Texture{ width, height },
+Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t rowPitch, void* pData, const DXGI_FORMAT textureFormat, std::string fileName) noexcept
+	: Texture{ width, height, fileName },
 	m_pTexture2D{ nullptr },
 	m_pSamplerState{ nullptr }
 {
@@ -61,6 +62,7 @@ std::shared_ptr<Texture2D> Texture2D::Create(const std::string& filePath) noexce
 //Only supports PS as of now [Emil F]
 void Texture2D::BindAsShaderResource(const uint8_t slot) noexcept
 {
+	std::lock_guard<std::mutex> lock(ResourceManager::Get()->m_GUIDToMutexMap[ResourceManager::Get()->ConvertGUIDToPair(ResourceManager::Get()->m_FileNameToGUIDMap[m_FileName])]);
 	CHECK_STD(Graphics::GetContext()->PSSetShaderResources(slot, 1u, m_pShaderResourceView.GetAddressOf()));
 	CHECK_STD(Graphics::GetContext()->PSSetSamplers(slot, 1u, m_pSamplerState.GetAddressOf()));
 }

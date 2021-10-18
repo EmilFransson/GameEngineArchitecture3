@@ -51,4 +51,5 @@ private:
 	std::unique_ptr<ConstantBuffer> m_pConstantBuffer;
 	std::vector<std::shared_ptr<MeshOBJ>> m_pBackPackMeshes;
 
+	bool level1;
 };

@@ -7,10 +7,11 @@ public:
 
 	void Update(float);
 	[[nodiscard]] constexpr DirectX::XMFLOAT4X4& GetViewProjectionMatrix() noexcept { return m_ViewPerspectiveMatrix; }
+	[[nodiscard]] constexpr DirectX::XMFLOAT3 GetPos() noexcept { return m_pos; }
 private:
 	void HandleInput(float);
 	float m_speed;
-
+	float m_lookSpeed = 2.0f;
 	DirectX::XMFLOAT4X4 m_ViewMatrix;
 	DirectX::XMFLOAT4X4 m_PerspectiveMatrix;
 	DirectX::XMFLOAT4X4 m_ViewPerspectiveMatrix;
