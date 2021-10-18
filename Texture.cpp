@@ -55,7 +55,7 @@ Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t
 
 std::shared_ptr<Texture2D> Texture2D::Create(const std::string& filePath) noexcept
 {
-	return ResourceManager::Get().Load<Texture2D>(filePath);
+	return ResourceManager::Get().Load<Texture2D>(ResourceManager::Get().ConvertGUIDToPair(ResourceManager::Get().m_FileNameToGUIDMap[filePath]));
 }
 
 //Only supports PS as of now [Emil F]
