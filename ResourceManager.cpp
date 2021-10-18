@@ -421,7 +421,7 @@ void ResourceManager::tWaitForJob(
 
 			m_tCondition.wait(lock, [myself]()
 				{
-					return !m_tQueue.empty();
+					return !m_tQueue.empty() || m_tTerminate;
 				});
 			if (m_tTerminate)
 			{

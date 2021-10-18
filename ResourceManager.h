@@ -32,8 +32,8 @@ public:
 	std::map<std::string, GUID> m_FileNameToGUIDMap;
 
 	//Used for thread initialization and cleanup.
-	void Init();
-	void CleanUp();
+	static void Init();
+	static void CleanUp();
 private:
 	ResourceManager() noexcept
 	{
@@ -76,7 +76,7 @@ private:
 
 	static void tWaitForJob();		//The threadfunction.
 	static void tFindResource(std::string, std::string, std::shared_ptr<Texture2D>*, std::vector<std::shared_ptr<MeshOBJ>>*);	//Function that is sent into the addJob function. The actual "work" for the thread.
-	void tShutdown();		//Called at shutdown.
+	static void tShutdown();		//Called at shutdown.
 public:
 	std::map<std::string, std::mutex> m_FilenameToMutexMap; //Used for objs
 	std::map<std::pair<uint64_t, uint64_t>, std::mutex> m_GUIDToMutexMap;	//Used for textures

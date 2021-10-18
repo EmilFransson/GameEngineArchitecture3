@@ -26,8 +26,9 @@ class Application
 {
 public:
 	Application() noexcept;
-	~Application() noexcept;
+	~Application() noexcept = default;
 	void Run() noexcept;
+	void CleanUp();
 private:
 	void DisplayProfilingResults() noexcept;
 	void GetPackagePath() noexcept;

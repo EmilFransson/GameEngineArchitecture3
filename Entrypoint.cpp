@@ -15,6 +15,7 @@ int CALLBACK WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 
 	Application app;
 	app.Run();
+	app.CleanUp();
 	return 0;
 }
 

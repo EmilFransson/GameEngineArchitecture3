@@ -45,7 +45,7 @@ Application::Application() noexcept
 	m_pCamera = std::make_unique<PerspectiveCamera>();
 }
 
-Application::~Application() noexcept
+void Application::CleanUp()
 {
 	ResourceManager::Get()->CleanUp();
 }
