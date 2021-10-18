@@ -6,40 +6,33 @@
 #include "Utility.h"
 
 Texture::Texture(const uint32_t width, const uint32_t height) noexcept
-	: m_pRenderTargetView{nullptr}, 
-	  m_pShaderResourceView{nullptr},
-	  m_Width{width},
-	  m_Height{height}
+	:m_pShaderResourceView{ nullptr },
+	m_Width{ width },
+	m_Height{ height }
 {
 }
 
-Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t rowPitch, void* pData) noexcept
-	: Texture{width, height}, 
-	  m_pTexture2D {nullptr},
-	  m_pSamplerState{nullptr}
+Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t rowPitch, void* pData, const DXGI_FORMAT textureFormat) noexcept
+	: Texture{ width, height },
+	m_pTexture2D{ nullptr },
+	m_pSamplerState{ nullptr }
 {
 	D3D11_TEXTURE2D_DESC textureDescriptor{};
 	textureDescriptor.Width = width;
 	textureDescriptor.Height = height;
 	textureDescriptor.MipLevels = 1u;
 	textureDescriptor.ArraySize = 1u;
-	textureDescriptor.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDescriptor.Format = textureFormat;
 	textureDescriptor.SampleDesc.Count = 1u;
 	textureDescriptor.SampleDesc.Quality = 0u;
 	textureDescriptor.Usage = D3D11_USAGE::D3D11_USAGE_DEFAULT; // Potentially temporary.
-	textureDescriptor.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDescriptor.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 	textureDescriptor.CPUAccessFlags = 0u;
 	textureDescriptor.MiscFlags = 0u;
 	D3D11_SUBRESOURCE_DATA subResourceData{};
 	subResourceData.pSysMem = pData;
 	subResourceData.SysMemPitch = rowPitch;
 	HR_I(Graphics::GetDevice()->CreateTexture2D(&textureDescriptor, &subResourceData, &m_pTexture2D));
-
-	D3D11_RENDER_TARGET_VIEW_DESC RTVDesc{};
-	RTVDesc.Format = textureDescriptor.Format;
-	RTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	RTVDesc.Texture2D.MipSlice = 0u;
-	HR_I(Graphics::GetDevice()->CreateRenderTargetView(m_pTexture2D.Get(), &RTVDesc, &m_pRenderTargetView));
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc{};
 	SRVDesc.Format = textureDescriptor.Format;
@@ -62,12 +55,7 @@ Texture2D::Texture2D(const uint32_t width, const uint32_t height, const uint32_t
 
 std::shared_ptr<Texture2D> Texture2D::Create(const std::string& filePath) noexcept
 {
-	return ResourceManager::Get()->Load<Texture2D>(filePath);
-}
-
-void Texture2D::BindAsRenderTarget() noexcept
-{
-	CHECK_STD(Graphics::GetContext()->OMSetRenderTargets(1u, m_pRenderTargetView.GetAddressOf(), Graphics::GetDepthStencilView().Get()));
+	return ResourceManager::Get().Load<Texture2D>(ResourceManager::Get().ConvertGUIDToPair(ResourceManager::Get().m_FileNameToGUIDMap[filePath]));
 }
 
 //Only supports PS as of now [Emil F]

@@ -28,4 +28,16 @@ private:
 	static HWND m_WindowHandle;
 	static MSG m_WindowMessage;
 	static bool m_Running;
+
+	static std::vector<int> m_keyMap;
+	static float m_deltaMouseX;
+	static float m_deltaMouseY;
+	static int m_oldMouseX;
+	static int m_oldMouseY;
+	static bool m_cursorShow;
+
+public:
+	static std::vector<int> GetKeyMap();
+	static float GetDeltaMouseX();
+	static float GetDeltaMouseY();
 };

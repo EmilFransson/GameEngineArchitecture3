@@ -16,6 +16,12 @@ uint32_t Window::m_Height = 0u;
 HWND Window::m_WindowHandle;
 MSG Window::m_WindowMessage = { 0 };
 bool Window::m_Running = true;
+std::vector<int> Window::m_keyMap = { 0 };
+float Window::m_deltaMouseX = 0.0f;
+float Window::m_deltaMouseY = 0.0f;
+int Window::m_oldMouseX = 0;
+int Window::m_oldMouseY = 0;
+bool Window::m_cursorShow = true;
 
 const Window& Window::Get() noexcept
 {
@@ -78,8 +84,17 @@ void Window::Initialize(const std::wstring& windowTitle, const uint32_t width, c
 	m_Width = width;
 	m_Height = height;
 
-	ShowWindow(m_WindowHandle, SW_SHOWNORMAL);
 
+	RAWINPUTDEVICE Rid[1];
+
+	Rid[0].usUsagePage = 0x01;          // HID_USAGE_PAGE_GENERIC
+	Rid[0].usUsage = 0x02;              // HID_USAGE_GENERIC_MOUSE
+	Rid[0].dwFlags = 0;    // adds mouse and also ignores legacy mouse messages
+	Rid[0].hwndTarget = 0;
+	RegisterRawInputDevices(Rid, 1, sizeof(Rid[0]));
+
+	ShowWindow(m_WindowHandle, SW_SHOWNORMAL);
+	
 	//DirectX initialization:
 	Graphics::Initialize(m_Width, m_Height);
 }
@@ -101,6 +116,14 @@ std::pair<uint32_t, uint32_t> Window::GetWindowResolution() noexcept
 
 const bool Window::OnUpdate()
 {
+	m_deltaMouseX = 0.0f;
+	m_deltaMouseY = 0.0f;
+	/*
+	if (!m_cursorShow)
+	{
+		SetCursorPos(GetSystemMetrics(SM_CXSCREEN) / 2, GetSystemMetrics(SM_CYSCREEN) / 2);
+	}
+	*/
 	while (PeekMessage(&m_WindowMessage, nullptr, 0u, 0u, PM_REMOVE))
 	{
 		TranslateMessage(&m_WindowMessage);
@@ -123,8 +146,96 @@ LRESULT Window::HandleMessages(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		m_Running = false;
 		break;
 	}
+	case WM_LBUTTONDOWN:
+	{
+		break;
+	}
+	case WM_INPUT:
+	{
+		UINT dwSize;
+
+		GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+		LPBYTE lpb = new BYTE[dwSize];
+		if (lpb == NULL)
+		{
+			return 0;
+		}
+
+		if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, lpb, &dwSize, sizeof(RAWINPUTHEADER)) != dwSize)
+			OutputDebugString(TEXT("GetRawInputData does not return correct size !\n"));
+
+		RAWINPUT* raw = (RAWINPUT*)lpb;
+
+		if (raw->header.dwType == RIM_TYPEMOUSE)
+		{
+			/*
+			if (raw->data.mouse.usButtonFlags == RI_MOUSE_LEFT_BUTTON_DOWN)
+			{
+				ShowCursor(!m_cursorShow);
+				m_cursorShow = !m_cursorShow;
+			}
+			*/
+			m_deltaMouseX = -raw->data.mouse.lLastX;
+			m_deltaMouseY = -raw->data.mouse.lLastY;
+		}
+		delete[] lpb;
+		
+		break;
+	}
+	case WM_KEYDOWN:
+	{
+		bool keyFound = false;
+		for (size_t i = 0; i < m_keyMap.size(); i++)
+		{
+			if (wParam == m_keyMap[i])
+			{
+				keyFound = true;
+				break;
+			}
+		}
+
+		if (!keyFound)
+		{
+			m_keyMap.push_back(static_cast<int>(wParam));
+		}
+		break;
+	}
+	case WM_KEYUP:
+	{
+		size_t i = 0;
+		bool keyFound = false;
+		for (i; i < m_keyMap.size(); i++)
+		{
+			if (wParam == m_keyMap[i])
+			{
+				keyFound = true;
+				break;
+			}
+		}
+		if (keyFound)
+		{
+			m_keyMap.erase(m_keyMap.begin() + i);
+		}
+
+		break;
+	}
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+std::vector<int> Window::GetKeyMap()
+{
+	return m_keyMap;
+}
+
+float Window::GetDeltaMouseX()
+{
+	return m_deltaMouseX;
+}
+
+float Window::GetDeltaMouseY()
+{
+	return m_deltaMouseY;
 }
 
 void Window::ShutDown()

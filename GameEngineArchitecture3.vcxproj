@@ -117,7 +117,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="ObjectClasses.cpp" />
     <ClCompile Include="OBJ_Loader.cpp" />
     <ClCompile Include="PackageTool.cpp" />
@@ -138,6 +140,7 @@
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="InputLayout.cpp" />
     <ClCompile Include="Quad.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="Stack.cpp" />
     <ClCompile Include="System.cpp" />
@@ -161,7 +164,9 @@
     <ClInclude Include="ImGui\imstb_rectpack.h" />
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="ObjectClasses.h" />
     <ClInclude Include="OBJ_Loader.h" />
     <ClInclude Include="PackageTool.h" />
@@ -175,6 +180,7 @@
     <ClInclude Include="Shader.h" />
     <ClInclude Include="InputLayout.h" />
     <ClInclude Include="Quad.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Stack.h" />
     <ClInclude Include="StackAllocator.h" />
@@ -203,6 +209,11 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="DirectXTex\DirectXTex_Desktop_2019_Win10.vcxproj">
+      <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

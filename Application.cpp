@@ -3,19 +3,19 @@
 #include "System.h"
 #include "RenderCommand.h"
 #include "PackageTool.h"
+
 Application::Application() noexcept
 	: m_Running{true}
 {
 	System::Initialize();
+	m_timer = std::make_unique<Time>();
+
 	ResourceManager::Get()->Init();
 	//Default 1280 x 720 window, see function-parameters for dimensions.
 	Window::Initialize(L"GameEngineArchitecture");
 	m_pImGui = std::make_unique<UI>();
-	ResourceManager::Get()->MapPackageContent();
-	
+	ResourceManager::Get().MapPackageContent();
 
-	m_pQuad = std::make_unique<Quad>();
-	m_pQuad->BindInternals();
 	m_pVertexShader = std::make_unique<VertexShader>("Shaders/VertexShader.hlsl");
 	m_pPixelShader = std::make_unique<PixelShader>("Shaders/PixelShader.hlsl");
 	m_pInputLayout = std::make_unique<InputLayout>(m_pVertexShader->GetVertexShaderBlob());
@@ -26,12 +26,18 @@ Application::Application() noexcept
 	//m_pMesh->BindInternals();
 	//
 	//ResourceManager::Get()->tAddJob("Cube.obj", m_pBrickTexture.get());
-	ResourceManager::Get()->tAddJob<Texture2D>("bricks.png", &m_pBrickTexture);
+	//ResourceManager::Get()->tAddJob<Texture2D>("bricks.png", &m_pBrickTexture);
 	//m_pBrickTexture = Texture2D::Create("bricks.png");
 	// 
 	//m_pBrickTexture = Texture2D::Create("bricks.png");
 	//m_pThanosTexture = Texture2D::Create("thanos.png");
 	
+	//Create models 
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 2.0f, 1.0f)));
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 1.0f, 2.0f)));
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(-10.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(2.0f, 2.0f, 1.0f)));
+	m_pModels.push_back(std::make_unique<Model>("backpack.obj", "diffuse.jpg", DirectX::XMFLOAT3(20.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(1.0f, 1.0f, 2.0f)));
+
 	RenderCommand::SetTopolopy(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pViewport = std::make_unique<Viewport>();
 	m_pViewport->Bind();
@@ -48,24 +54,37 @@ void Application::Run() noexcept
 {
 	while (m_Running)
 	{
+		m_timer->Update();
+		m_pCamera->Update(static_cast<float>(m_timer->DeltaTime()));
 		static const FLOAT color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 		RenderCommand::ClearBackBuffer(color);
 		RenderCommand::ClearDepthBuffer();
 		RenderCommand::BindBackBuffer();
 
 		static float delta = 0.0f;
-		delta += 0.15f;
-
-		DirectX::XMMATRIX worldMatrix = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f) * DirectX::XMMatrixTranslation(0.0f, 0.0f, 2.0f);
-		DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
-		static Transform transform{};
-		transform.wvpMatrix = DirectX::XMMatrixTranspose(worldMatrix * viewPerspectiveMatrix);
-		m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
-		m_pConstantBuffer->BindToVertexShader();
-		//m_pThanosTexture->BindAsShaderResource();
-		m_pBrickTexture->BindAsShaderResource();
+		delta += static_cast<float>(m_timer->DeltaTime()) * 10.0f;
 		
-		RenderCommand::DrawIndexed(m_pQuad->GetNrOfindices());
+		DirectX::XMMATRIX viewPerspectiveMatrix = DirectX::XMLoadFloat4x4(&m_pCamera->GetViewProjectionMatrix());
+
+		//For every model.
+		for (uint32_t i{ 0u }; i < m_pModels.size(); i++)
+		{
+			m_pModels[i]->Update(static_cast<float>(delta));
+
+			static Transform transform{};
+			transform.wvpMatrix = DirectX::XMMatrixTranspose(m_pModels[i]->GetWMatrix() * viewPerspectiveMatrix);
+			m_pConstantBuffer = std::make_unique<ConstantBuffer>(static_cast<UINT>(sizeof(Transform)), 0, &transform);
+			m_pConstantBuffer->BindToVertexShader();
+
+			//Bind texture for this model.
+			m_pModels[i]->BindTexture();
+			//Bind the meshes in the model one by one and draw them.
+			for (uint32_t j{ 0u }; j < m_pModels[i]->GetNrOfMeshes(); j++)
+			{
+				m_pModels[i]->BindMesh(j);
+				RenderCommand::DrawIndexed(m_pModels[i]->GetNrOfMeshIndices(j));
+			}
+		}
 
 		UI::Begin();
 		// Windows not part of the dock space goes here:

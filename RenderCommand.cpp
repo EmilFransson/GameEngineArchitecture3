@@ -14,7 +14,7 @@ void RenderCommand::ClearDepthBuffer() noexcept
 
 void RenderCommand::BindBackBuffer() noexcept
 {
-	CHECK_STD(Graphics::GetContext()->OMSetRenderTargets(1u, Graphics::GetBackBufferRTV().GetAddressOf(), nullptr));
+	CHECK_STD(Graphics::GetContext()->OMSetRenderTargets(1u, Graphics::GetBackBufferRTV().GetAddressOf(), Graphics::GetDepthStencilView().Get()));
 }
 
 void RenderCommand::UnbindRenderTargets(const unsigned int nrOfTargets) noexcept

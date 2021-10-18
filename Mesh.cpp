@@ -5,8 +5,8 @@
 #include "Utility.h"
 #include "ResourceManager.h"
 
-MeshOBJ::MeshOBJ(const std::vector<objl::Vertex>& vertices, const std::vector<unsigned int> indices) noexcept
-	: m_NrOfIndices{ indices.size() }, m_Strides{ sizeof(objl::Vertex)}
+MeshOBJ::MeshOBJ(const std::vector<objl::Vertex>& vertices, const std::vector<unsigned int> indices, const std::shared_ptr<Material>& pMaterial) noexcept
+	: m_NrOfIndices{ indices.size() }, m_Strides{ sizeof(objl::Vertex)}, m_pMaterial{pMaterial}
 {
 	D3D11_BUFFER_DESC vertexBufferDescriptor{};
 	vertexBufferDescriptor.ByteWidth = sizeof(objl::Vertex) * static_cast<UINT>(vertices.size());
@@ -33,6 +33,15 @@ MeshOBJ::MeshOBJ(const std::vector<objl::Vertex>& vertices, const std::vector<un
 	subResourceData2.pSysMem = indices.data();
 
 	HR_I(Graphics::GetDevice()->CreateBuffer(&indexBufferDescriptor, &subResourceData2, &m_pIndexBuffer));
+
+	if (pMaterial != nullptr)
+	{
+		m_HasMaterial = true;
+	}
+	else
+	{
+		m_HasMaterial = false;
+	}
 }
 
 void MeshOBJ::BindInternals(const uint8_t slot) noexcept
@@ -42,8 +51,8 @@ void MeshOBJ::BindInternals(const uint8_t slot) noexcept
 	CHECK_STD(Graphics::GetContext()->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT::DXGI_FORMAT_R32_UINT, 0u));
 }
 
-std::shared_ptr<MeshOBJ> MeshOBJ::Create(const std::string& fileName) noexcept
+std::vector<std::shared_ptr<MeshOBJ>> MeshOBJ::Create(const std::string& fileName) noexcept
 {
-	return ResourceManager::Get()->Load<MeshOBJ>(fileName);
+	return ResourceManager::Get().LoadMultiple<MeshOBJ>(fileName);
 }
 
